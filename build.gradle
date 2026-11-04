@@ -13,7 +13,8 @@ repositories {
 	mavenCentral()
 }
 
-def runeLiteVersion = 'latest.release'
+// Pinned against the 2026-11-03 stable RuneLite release for reproducible CI.
+def runeLiteVersion = '1.13.6'
 def pluginMainClass = 'com.raccooncoefficient.RaccoonCoefficientPluginTest'
 
 dependencies {

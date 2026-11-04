@@ -1,7 +1,6 @@
 package com.raccooncoefficient;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
@@ -9,7 +8,7 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.gameval.InventoryID;
 import com.raccooncoefficient.score.WornItem;
 
-/** Reads the worn-equipment container. Empty indexes are omitted, not scored as items. */
+/** Reads worn equipment. Null means unavailable; a real empty container means empty. */
 final class WornEquipment
 {
 	private WornEquipment()
@@ -21,7 +20,7 @@ final class WornEquipment
 		ItemContainer container = client.getItemContainer(InventoryID.WORN);
 		if (container == null)
 		{
-			return Collections.emptyList();
+			return null; // unavailable container is not a confirmed empty loadout
 		}
 
 		Item[] items = container.getItems();

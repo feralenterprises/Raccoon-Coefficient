@@ -36,17 +36,19 @@ public class GearScoreTooltipOverlay extends Overlay
 	private final RuneLiteItemStatSource stats;
 	private final TooltipManager tooltipManager;
 	private final RuneLiteConfig runeLiteConfig;
-	private final GearScoreCalculator calculator = GearScoreCalculator.wave1();
+	private final GearScoreCalculator calculator;
 
 	@Inject
 	GearScoreTooltipOverlay(
 		Client client,
 		RuneLiteItemStatSource stats,
+		RuneLiteItemNameSource names,
 		TooltipManager tooltipManager,
 		RuneLiteConfig runeLiteConfig)
 	{
 		this.client = client;
 		this.stats = stats;
+		this.calculator = GearScoreCalculator.wave2(names);
 		this.tooltipManager = tooltipManager;
 		this.runeLiteConfig = runeLiteConfig;
 		setPosition(OverlayPosition.DYNAMIC);
@@ -63,6 +65,10 @@ public class GearScoreTooltipOverlay extends Overlay
 		}
 
 		List<WornItem> worn = WornEquipment.read(client);
+		if (worn == null)
+		{
+			return null; // no trustworthy equipment state; never preview a fake zero
+		}
 		GearScoreComparison comparison = calculator.compare(itemId, worn, stats);
 		String text = GearScoreText.tooltip(comparison, WornEquipment.contains(worn, itemId));
 		if (text != null)
