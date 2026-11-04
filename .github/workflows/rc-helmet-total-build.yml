@@ -115,10 +115,10 @@ jobs:
           portable_sha=hashlib.sha256(portable.read_bytes()).hexdigest()
           (pkg/'VERIFIED-BUILD-SHA256.txt').write_text(
               'Helmet total UI source commit: '+__import__('os').environ.get('GITHUB_SHA','unknown')+'\n' +
-              'Helmet total score JAR SHA256: '+sha+'\n'
-              'Portable RuneLite developer client JAR SHA256: '+portable_sha+'\n'
-              'Build: Java 17, Java 11 target, Gradle 8.10, RuneLite 1.13.6\n'
-              'Native Windows launch: NOT VERIFIED\n'
+              'Helmet total score JAR SHA256: '+sha+'\n' +
+              'Portable RuneLite developer client JAR SHA256: '+portable_sha+'\n' +
+              'Build: Java 17, Java 11 target, Gradle 8.10, RuneLite 1.13.6\n' +
+              'Native Windows launch: NOT VERIFIED\n' +
               'Hub submission: NOT AUTHORIZED\n',encoding='utf-8'
           )
           assert (target/'gradlew.bat').is_file()
