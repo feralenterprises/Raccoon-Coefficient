@@ -3,7 +3,7 @@
 Date: 2026-11-04
 Repository: `feralenterprises/Raccoon-Coefficient`
 Authoritative baseline: Wave 8 commit `c9a67c50a4472fd99ff0bcbca2875ae3aae5c13e`
-Status: CODED, independent CI pending, NOT NATIVE VERIFIED, NOT OWNER ACCEPTED
+Status: BUILT (isolated GitHub Actions Java build/tests passed), NOT NATIVE VERIFIED, NOT OWNER ACCEPTED
 Owner scope: directly implement here, source/automated tests only; no native/owner tests, merge, release, charge counters or broken-item tracking
 
 ## Authority and provenance: verified from actual GitHub files
@@ -44,11 +44,11 @@ Waves 2–8 used separately branch-scoped CI workflows, so a future main-branch 
 ## FERAL-VERIFY-001 handback
 
 TICKET: RC-W9-001
-STATUS: CODED pending CI, NOT NATIVE VERIFIED
+STATUS: BUILT, NOT NATIVE VERIFIED
 WHAT CHANGED: repaired duplicate slot/false upgrade edge cases; refreshed own tooltip score within a render cycle; refreshed project docs and main-branch CI
 EXACT FILES CHANGED: `src/main/java/com/raccooncoefficient/score/WornLayout.java`, `GearScoreCalculator.java`, `SetEffectDetector.java`, `WeaponPassiveDetector.java`; `src/main/java/com/raccooncoefficient/ScoreTooltipQueue.java`; `src/test/java/com/raccooncoefficient/score/WornLayoutIntegrationTest.java`, `src/test/java/com/raccooncoefficient/ScoreTooltipQueueUpdateTest.java`; `README.md`, `.github/workflows/rc-unified-ci.yml`, this document.
 WHAT PLAYER CAN NOW DO: source-level safeguards against impossible duplicate-slot totals and stale same-cycle score tooltips; native behavior not verified.
-EVIDENCE: Wave 9 commit/CI receipt to be attached on successful run.
+EVIDENCE: [Unified GitHub Actions run #41892542615](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41892542615) succeeded with Java compile, full JUnit tests, release-boundary guard and `BUILD SUCCESSFUL in 45s`. [Test/JAR artifact](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41892542615/artifacts/13355355427). This result covers the source head before this documentation-only amendment; the final head is separately checked by CI.
 OWNER TEST STEPS: NONE TODAY per owner instruction.
 STILL BROKEN: no native proof; unapproved set/passive numeric weights; limited special-slot/variant evidence.
 NEXT ACTION: independent review and owner decision on future native verification, numeric score calibration, and release; no merge without explicit approval.
