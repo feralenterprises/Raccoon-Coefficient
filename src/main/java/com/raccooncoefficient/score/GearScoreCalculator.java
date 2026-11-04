@@ -166,7 +166,11 @@ public final class GearScoreCalculator
 		{
 			return GearScoreComparison.unknownItem();
 		}
-		EquipmentBonus candidate = source.getVerifiedBonus(candidateItemId);
+		// Freeze all stats for THIS hypothetical swap only. RuneLite-backed
+		// lookups can otherwise repeat for candidate, removed gear, before and
+		// after. Nothing is retained across rendering frames or account changes.
+		ItemStatSource observed = new ComparisonStatSnapshot(source);
+		EquipmentBonus candidate = observed.getVerifiedBonus(candidateItemId);
 		if (candidate == null)
 		{
 			return GearScoreComparison.unknownItem();
@@ -179,7 +183,7 @@ public final class GearScoreCalculator
 
 		List<WornItem> current = worn;
 		Map<Integer, WornItem> bySlot = indexBySlot(current);
-		List<Integer> affected = affectedSlots(candidate, bySlot, source);
+		List<Integer> affected = affectedSlots(candidate, bySlot, observed);
 		if (affected == null)
 		{
 			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
@@ -194,7 +198,7 @@ public final class GearScoreCalculator
 			WornItem removed = bySlot.get(slot);
 			if (removed != null)
 			{
-				EquipmentBonus removedBonus = source.getVerifiedBonus(removed.getItemId());
+				EquipmentBonus removedBonus = observed.getVerifiedBonus(removed.getItemId());
 				if (removedBonus == null)
 				{
 					return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
@@ -218,8 +222,8 @@ public final class GearScoreCalculator
 		}
 		after.add(new WornItem(candidate.getSlot(), candidateItemId));
 
-		GearScoreBreakdown before = score(current, source);
-		GearScoreBreakdown next = score(after, source);
+		GearScoreBreakdown before = score(current, observed);
+		GearScoreBreakdown next = score(after, observed);
 		BigDecimal itemScore = round1(scoreBonus(candidate));
 
 		if (!before.isComplete() || !next.isComplete())
@@ -300,6 +304,29 @@ public final class GearScoreCalculator
 			bySlot.put(Integer.valueOf(item.getSlotIndex()), item);
 		}
 		return bySlot;
+	}
+
+	/** Cache verified OR missing item definitions for one comparison call only. */
+	private static final class ComparisonStatSnapshot implements ItemStatSource
+	{
+		private final ItemStatSource delegate;
+		private final Map<Integer, EquipmentBonus> lookedUp = new HashMap<Integer, EquipmentBonus>();
+
+		private ComparisonStatSnapshot(ItemStatSource delegate)
+		{
+			this.delegate = delegate;
+		}
+
+		@Override
+		public EquipmentBonus getVerifiedBonus(int itemId)
+		{
+			Integer key = Integer.valueOf(itemId);
+			if (!lookedUp.containsKey(key))
+			{
+				lookedUp.put(key, delegate.getVerifiedBonus(itemId));
+			}
+			return lookedUp.get(key);
+		}
 	}
 
 	private static BigDecimal round1(BigDecimal value)
