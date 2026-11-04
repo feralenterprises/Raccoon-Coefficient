@@ -48,7 +48,7 @@ public class GearScoreTooltipOverlay extends Overlay
 	{
 		this.client = client;
 		this.stats = stats;
-		this.calculator = GearScoreCalculator.wave2(names);
+		this.calculator = GearScoreCalculator.wave3(names);
 		this.tooltipManager = tooltipManager;
 		this.runeLiteConfig = runeLiteConfig;
 		setPosition(OverlayPosition.DYNAMIC);
