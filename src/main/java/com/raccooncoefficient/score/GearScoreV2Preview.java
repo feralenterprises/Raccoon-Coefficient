@@ -21,7 +21,9 @@ public final class GearScoreV2Preview
 	private static final BigDecimal MAGIC_ATTACK = new BigDecimal("0.40");
 	private static final BigDecimal DEFENCE = new BigDecimal("0.08");
 	private static final BigDecimal MELEE_STRENGTH = new BigDecimal("0.30");
-	private static final BigDecimal RANGED_STRENGTH = new BigDecimal("0.30");
+	// Preserve the proven v1 Ranged Strength weight until a representative
+	// ranged equipment and ammunition study justifies any reduction.
+	private static final BigDecimal RANGED_STRENGTH = new BigDecimal("1.00");
 	private static final BigDecimal MAGIC_DAMAGE_PERCENT = new BigDecimal("2.00");
 	private static final BigDecimal PRAYER = new BigDecimal("0.50");
 
