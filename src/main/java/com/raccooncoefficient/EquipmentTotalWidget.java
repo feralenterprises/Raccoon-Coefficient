@@ -70,12 +70,13 @@ final class EquipmentTotalWidget
 			return;
 		}
 
+		Rectangle helm = helmet.getBounds();
 		Widget actualParent = helmet.getParent();
-		if (actualParent == null || actualParent.isHidden())
+		if (actualParent == null || actualParent.isHidden()
+			|| !canContainLabel(actualParent.getBounds(), helm))
 		{
 			actualParent = contents;
 		}
-		Rectangle helm = helmet.getBounds();
 		Rectangle area = actualParent.getBounds();
 		if (helm == null || area == null || helm.width < 20 || helm.height < 20
 			|| area.width < 160 || area.height < 80)
@@ -150,6 +151,21 @@ final class EquipmentTotalWidget
 		label = null;
 		parent = null;
 		lastStatus = null;
+	}
+
+	private static boolean canContainLabel(Rectangle area, Rectangle helm)
+	{
+		if (area == null || helm == null || area.width < LABEL_WIDTH
+			|| area.height < LABEL_HEIGHT || helm.width < 20 || helm.height < 20)
+		{
+			return false;
+		}
+		int centre = helm.x + helm.width / 2;
+		int left = centre - LABEL_WIDTH / 2;
+		int top = helm.y - GAP_ABOVE_HELMET - LABEL_HEIGHT;
+		return left >= area.x && top >= area.y
+			&& left + LABEL_WIDTH <= area.x + area.width
+			&& top + LABEL_HEIGHT <= area.y + area.height;
 	}
 
 	private Widget locateOwnedChild(Widget actualParent)
