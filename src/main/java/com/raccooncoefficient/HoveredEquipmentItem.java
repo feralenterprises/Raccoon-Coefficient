@@ -5,11 +5,9 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetUtil;
 
 /**
- * Resolves the hovered equippable item without modifying RuneLite's menu.
- *
- * MenuEntry.getItemId() is the authoritative item identity when provided.
- * Widget.getItemId() is a guarded fallback. Never assume a hard-coded child
- * index is the item: that can refer to an entirely different UI element.
+ * Resolves the current DEFAULT hovered item, not an unrelated lower-priority
+ * action hidden underneath it. Uses RuneLite metadata, without editing menus
+ * or sharing state/code with HoverLite.
  */
 final class HoveredEquipmentItem
 {
@@ -19,37 +17,29 @@ final class HoveredEquipmentItem
 
 	static int resolve(MenuEntry[] entries)
 	{
-		if (entries == null)
+		if (entries == null || entries.length == 0)
 		{
 			return EquipmentHover.NO_ITEM;
 		}
 
-		// RuneLite menus store the top-priority entries at the end. Skip
-		// synthetic/plugin entries with no widget, but do not mutate them.
-		for (int i = entries.length - 1; i >= 0; i--)
+		// Match the actual default action shown to the player.
+		// Searching backward for *any* eligible widget can accidentally label
+		// a background item when a non-item/menu action is currently on top.
+		MenuEntry entry = entries[entries.length - 1];
+		if (!ItemHoverAction.isItemAction(entry))
 		{
-			MenuEntry entry = entries[i];
-			if (entry == null)
-			{
-				continue;
-			}
-			Widget widget = entry.getWidget();
-			if (widget == null)
-			{
-				continue;
-			}
-
-			int widgetId = widget.getId();
-			int group = WidgetUtil.componentToInterface(widgetId);
-			int resolved = EquipmentHover.menuItemId(
-				group, widgetId, widget.getParentId(),
-				entry.getItemId(), widget.getItemId());
-			if (resolved != EquipmentHover.NO_ITEM)
-			{
-				return resolved;
-			}
+			return EquipmentHover.NO_ITEM;
 		}
 
-		return EquipmentHover.NO_ITEM;
+		Widget widget = entry.getWidget();
+		if (widget == null)
+		{
+			return EquipmentHover.NO_ITEM;
+		}
+
+		int widgetId = widget.getId();
+		int group = WidgetUtil.componentToInterface(widgetId);
+		return EquipmentHover.menuItemId(group, widgetId,
+			widget.getParentId(), entry.getItemId(), widget.getItemId());
 	}
 }
