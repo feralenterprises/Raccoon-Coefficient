@@ -141,15 +141,15 @@ public final class SetEffectDetector
 		rules.add(barrows("torag", "torag's helm", "torag's platebody", "torag's platelegs", "torag's hammers"));
 		rules.add(barrows("verac", "verac's helm", "verac's brassard", "verac's plateskirt", "verac's flail"));
 
-		rules.add(rule("justiciar", JUSTICIAR, "Conditional incoming-damage reduction",
+		rules.add(rule("justiciar", JUSTICIAR, "Incoming damage reduction uses the relevant defence bonus / 3000 outside PvP and typeless damage",
 			r(HEAD, "justiciar faceguard"), r(BODY, "justiciar chestguard"), r(LEGS, "justiciar legguards")));
 
 		// 22 July 2026 changed Inquisitor from a full-set effect to piecewise.
-		rules.add(rule("inquisitor.helm", INQUISITOR, "Piecewise crush effect",
+		rules.add(rule("inquisitor.helm", INQUISITOR, "+0.5% crush-style accuracy and damage (independent piece effect)",
 			r(HEAD, "inquisitor's great helm")));
-		rules.add(rule("inquisitor.body", INQUISITOR, "Piecewise crush effect",
+		rules.add(rule("inquisitor.body", INQUISITOR, "+1% crush-style accuracy and damage (22 July 2026)",
 			r(BODY, "inquisitor's hauberk")));
-		rules.add(rule("inquisitor.legs", INQUISITOR, "Piecewise crush effect",
+		rules.add(rule("inquisitor.legs", INQUISITOR, "+1% crush-style accuracy and damage (22 July 2026)",
 			r(LEGS, "inquisitor's plateskirt")));
 
 		// Crystal pieces contribute separately with an eligible bow.
