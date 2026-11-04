@@ -173,6 +173,24 @@ public final class GearScoreCalculator
 			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
 		}
 
+		// The known base-stat change can be computed from ONLY displaced slots.
+		// Missing unrelated gear must not be silently treated as zero, and an
+		// unresolved effect must not suppress an otherwise verified base delta.
+		BigDecimal baseDelta = scoreBonus(candidate);
+		for (Integer slot : affected)
+		{
+			WornItem removed = bySlot.get(slot);
+			if (removed != null)
+			{
+				EquipmentBonus removedBonus = source.getVerifiedBonus(removed.getItemId());
+				if (removedBonus == null)
+				{
+					return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
+				}
+				baseDelta = baseDelta.subtract(scoreBonus(removedBonus));
+			}
+		}
+
 		List<WornItem> after = new ArrayList<WornItem>(current.size() + 1);
 		for (int i = 0; i < current.size(); i++)
 		{
@@ -190,13 +208,17 @@ public final class GearScoreCalculator
 
 		GearScoreBreakdown before = score(current, source);
 		GearScoreBreakdown next = score(after, source);
-		if (!before.isExtensionDataComplete() || !next.isExtensionDataComplete())
+		BigDecimal itemScore = round1(scoreBonus(candidate));
+
+		if (!before.isComplete() || !next.isComplete())
 		{
-			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
+			return GearScoreComparison.knownItemBaseOnlyDelta(itemScore, round1(baseDelta));
 		}
 
-		BigDecimal delta = next.displayedTotal().subtract(before.displayedTotal());
-		return GearScoreComparison.knownItem(round1(scoreBonus(candidate)), delta);
+		// Round the precise change ONCE; subtracting two rounded displayed
+		// totals can introduce a spurious 0.1 difference at HALF_UP boundaries.
+		BigDecimal delta = round1(next.totalUnrounded().subtract(before.totalUnrounded()));
+		return GearScoreComparison.knownItem(itemScore, delta);
 	}
 
 	/**
