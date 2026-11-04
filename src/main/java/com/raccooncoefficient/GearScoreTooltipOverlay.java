@@ -3,6 +3,7 @@ package com.raccooncoefficient;
 import com.raccooncoefficient.score.GearScoreCalculator;
 import com.raccooncoefficient.score.GearScoreComparison;
 import com.raccooncoefficient.score.GearScoreText;
+import com.raccooncoefficient.score.ItemStatSource;
 import com.raccooncoefficient.score.WornItem;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -29,7 +30,7 @@ import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 public class GearScoreTooltipOverlay extends Overlay
 {
 	private final Client client;
-	private final RuneLiteItemStatSource stats;
+	private final ItemStatSource stats;
 	private final TooltipManager tooltipManager;
 	private final RuneLiteConfig runeLiteConfig;
 	private final GearScoreCalculator calculator;
@@ -42,9 +43,20 @@ public class GearScoreTooltipOverlay extends Overlay
 		TooltipManager tooltipManager,
 		RuneLiteConfig runeLiteConfig)
 	{
+		this(client, stats, GearScoreCalculator.wave3(names), tooltipManager, runeLiteConfig);
+	}
+
+	/** Testable rendering seam; production still uses the injected RuneLite adapters. */
+	GearScoreTooltipOverlay(
+		Client client,
+		ItemStatSource stats,
+		GearScoreCalculator calculator,
+		TooltipManager tooltipManager,
+		RuneLiteConfig runeLiteConfig)
+	{
 		this.client = client;
 		this.stats = stats;
-		this.calculator = GearScoreCalculator.wave3(names);
+		this.calculator = calculator;
 		this.tooltipManager = tooltipManager;
 		this.runeLiteConfig = runeLiteConfig;
 		setPosition(OverlayPosition.DYNAMIC);
