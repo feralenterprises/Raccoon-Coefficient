@@ -1,0 +1,107 @@
+name: RC UI016 Equipment Text Widget + Lightweight Package
+
+on:
+  push:
+    branches:
+      - feature/rc-ui016-equipment-widget-text-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout standalone Raccoon Coefficient
+        uses: actions/checkout@v4
+      - name: Java 17 (Java 11 bytecode target)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: No other plugin dependencies
+        shell: bash
+        run: |
+          if grep -RniE '(^import |implementation |compileOnly |runtimeOnly ).*(trashpandatracker|hoverlite|gg\\.feral\\.burrow)' src/main/java build.gradle; then
+            echo "Raccoon Coefficient must be standalone"
+            exit 1
+          fi
+      - name: Verify production switched to equipment widget child
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'equipmentTotalWidget.refresh()' src/main/java/com/raccooncoefficient/RaccoonCoefficientPlugin.java
+          ! grep -Eq 'overlayManager.add\(equipmentScoreOverlay\)' src/main/java/com/raccooncoefficient/RaccoonCoefficientPlugin.java
+          grep -Fq 'createChild(-1, WidgetType.TEXT)' src/main/java/com/raccooncoefficient/EquipmentTotalWidget.java
+          grep -Fq 'setNoClickThrough(false)' src/main/java/com/raccooncoefficient/EquipmentTotalWidget.java
+      - name: Clean build + all source regressions
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+      - name: Verify the compiled widget and small plugin JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR="build/libs/raccoon-coefficient-1.0.0.jar"
+          test -s "$JAR"
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/EquipmentTotalWidget.class'
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPlugin.class'
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/GearScoreTooltipOverlay.class'
+          test "$(stat -c%s "$JAR")" -lt 300000
+          sha256sum "$JAR"
+      - name: Pack genuinely lightweight Windows ZIP
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, shutil, zipfile
+          from pathlib import Path
+          root = Path.cwd()
+          package = root / 'build' / 'rc-ui016-light'
+          project = package / 'Raccoon-Coefficient'
+          package.mkdir(parents=True, exist_ok=True)
+          shutil.copytree(root, project, ignore=shutil.ignore_patterns(
+              '.git','build','.gradle','windows','lightweight','.idea','out','*.iml'))
+          for script in ('START-DEV-RUNELITE.bat','CLEAN-BUILD-AND-RUN.bat',
+                         'BUILD-ONLY.bat','README-FIRST.txt'):
+              shutil.copy2(root/'lightweight'/script,package/script)
+          compiled = root/'build'/'libs'/'raccoon-coefficient-1.0.0.jar'
+          outputjar = package/'BUILT-JAR'/compiled.name
+          outputjar.parent.mkdir()
+          shutil.copy2(compiled, outputjar)
+          sha = hashlib.sha256(compiled.read_bytes()).hexdigest()
+          (package/'SOURCE-AND-BUILD-SHA256.txt').write_text(
+              'RC-UI-016 small compiled plugin JAR SHA-256: '+sha+'\n'
+              'RuneLite portable developer client included: NO\n'
+              'Windows Gradle build + dev launch: YES (requires online dependencies)\n'
+              'Native RuneLite equipment screenshot verified: NO\n', encoding='utf-8')
+          assert (project/'gradle/wrapper/gradle-wrapper.jar').is_file()
+          assert (project/'gradlew.bat').is_file()
+          assert (project/'src/main/java/com/raccooncoefficient/EquipmentTotalWidget.java').is_file()
+          archive=root/'build'/'RACCOON-COEFFICIENT-LIGHTWEIGHT-UI016.zip'
+          with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED) as z:
+              for item in sorted(package.rglob('*')):
+                  if item.is_file():
+                      z.write(item,item.relative_to(package.parent))
+          with zipfile.ZipFile(archive) as z:
+              assert z.testzip() is None
+              names=z.namelist()
+              assert not any(name.endswith('-all.jar') for name in names)
+              assert any(name.endswith('START-DEV-RUNELITE.bat') for name in names)
+              assert any(name.endswith('BUILT-JAR/raccoon-coefficient-1.0.0.jar') for name in names)
+          print('PACKAGE_ZIP_BYTES:', archive.stat().st_size)
+          print('PACKAGE_ZIP_FILES:',len(names))
+          print('PACKAGE_ZIP_SHA256:',hashlib.sha256(archive.read_bytes()).hexdigest())
+          assert archive.stat().st_size < 2000000, 'Package accidentally contains a portable client'
+          PY
+      - name: Upload lightweight ZIP and test receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RC-UI016-LIGHTWEIGHT-ONECLICK
+          path: |
+            build/RACCOON-COEFFICIENT-LIGHTWEIGHT-UI016.zip
+            build/reports/tests/test/**
+            build/test-results/test/**
+          if-no-files-found: warn
