@@ -112,8 +112,6 @@ jobs:
           portable_copy=pkg/'PORTABLE-CLIENT'/portable.name
           portable_copy.parent.mkdir(parents=True)
           shutil.copy2(portable,portable_copy)
-          local_portable=target/'build'/'libs'/portable.name
-          shutil.copy2(portable,local_portable)
           sha=hashlib.sha256(jar.read_bytes()).hexdigest()
           portable_sha=hashlib.sha256(portable.read_bytes()).hexdigest()
           (pkg/'VERIFIED-BUILD-SHA256.txt').write_text(
