@@ -215,9 +215,9 @@ public final class GearScoreCalculator
 			return GearScoreComparison.knownItemBaseOnlyDelta(itemScore, round1(baseDelta));
 		}
 
-		// Round the precise change ONCE; subtracting two rounded displayed
-		// totals can introduce a spurious 0.1 difference at HALF_UP boundaries.
-		BigDecimal delta = round1(next.totalUnrounded().subtract(before.totalUnrounded()));
+		// A hovered total delta must agree with the two one-decimal totals
+		// the player can actually see before and after the equipment change.
+		BigDecimal delta = next.displayedTotal().subtract(before.displayedTotal());
 		return GearScoreComparison.knownItem(itemScore, delta);
 	}
 
