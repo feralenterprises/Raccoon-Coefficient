@@ -3,7 +3,7 @@
 **Date:** 2026-11-04
 **Repository:** `feralenterprises/Raccoon-Coefficient` only
 **Authoritative source base:** Wave 10 commit `3f2952202c2c7a5b15c46f116c75eb516d9768ed`
-**Status:** CODED, CI verification pending, **NOT NATIVE VERIFIED**, **NOT OWNER ACCEPTED**
+**Status:** BUILT (GitHub Actions compile, tests and artifact gates passed), **NOT NATIVE VERIFIED**, **NOT OWNER ACCEPTED**
 
 ## Mission and boundaries
 
@@ -55,7 +55,7 @@ The JAR is an **engineering candidate artifact**, not verified deployable in Run
 
 **TICKET:** RC-W11-001
 
-**STATUS:** CODED pending CI, **NOT NATIVE VERIFIED**.
+**STATUS:** BUILT, **NOT NATIVE VERIFIED**.
 
 **WHAT CHANGED:** source-proven repeated lookup issue repaired; deterministic 2,048-case reference suite; reproducible JAR configuration and branch CI requiring actual JAR structure, Java 11 bytecode, source commit and SHA-256 evidence.
 
@@ -63,7 +63,7 @@ The JAR is an **engineering candidate artifact**, not verified deployable in Run
 
 **WHAT THE PLAYER CAN NOW DO:** The same source-level equipment swap comparison, with fewer redundant stats lookups. No new UI and **not native verified**.
 
-**EVIDENCE:** GitHub head, CI logs and candidate checksum, to be attached after successful run.
+**EVIDENCE:** [Wave 11 push build #41895449254](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41895449254) confirmed compiled candidate, Java 11 class major 55, full automated tests and standalone guard, **BUILD SUCCESSFUL in 33s**. [Candidate JAR/test evidence artifact](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41895449254/artifacts/13356575186). Source head for that run: `befdeff35dfa688ba797e7857320c0e0e9cb23b3`. JAR: `build/libs/raccoon-coefficient-1.0.0.jar`; SHA-256: `190cd23ba9d57f24d762de91aa3e16e6f5cceb3e661e13f0b3e9c3043015335a`. An independently triggered PR merge-ref build #41895497018 produced the **same** SHA-256, supporting deterministic archive construction; this documentation-only update creates a subsequent source HEAD and must also pass CI.
 
 **OWNER TEST STEPS:** NONE TODAY.
 
