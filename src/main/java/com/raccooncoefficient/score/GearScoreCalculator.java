@@ -60,6 +60,21 @@ public final class GearScoreCalculator
 			Collections.<WeaponPassive>emptyList());
 	}
 
+	/**
+	 * Wave 3 includes Wave 2 armour detection and weapon-passive identification.
+	 * Neither extension supplies an invented numerical coefficient: active or
+	 * contextual effects mark the aggregate as an incomplete base subtotal.
+	 */
+	public static GearScoreCalculator wave3(SetEffectDetector.ItemNameSource identities)
+	{
+		return new GearScoreCalculator(
+			GearScoreCoefficients.wave1(),
+			Collections.<SetBonus>singletonList(
+				new PendingSetEffectBonus(new SetEffectDetector(), identities)),
+			Collections.<WeaponPassive>singletonList(
+				new PendingWeaponPassiveBonus(new WeaponPassiveDetector(), identities)));
+	}
+
 	public GearScoreCoefficients getCoefficients()
 	{
 		return coefficients;
@@ -92,7 +107,7 @@ public final class GearScoreCalculator
 		boolean extensionsKnown = true;
 		for (int i = 0; i < setBonuses.size(); i++)
 		{
-			BigDecimal part = setBonuses.get(i).gearScore(items, source);
+			BigDecimal part = setBonuses.get(i).gearScore(worn == null ? null : items, source);
 			if (part == null)
 			{
 				extensionsKnown = false;
@@ -102,7 +117,7 @@ public final class GearScoreCalculator
 		}
 		for (int i = 0; i < weaponPassives.size(); i++)
 		{
-			BigDecimal part = weaponPassives.get(i).gearScore(items, source);
+			BigDecimal part = weaponPassives.get(i).gearScore(worn == null ? null : items, source);
 			if (part == null)
 			{
 				extensionsKnown = false;
@@ -145,7 +160,12 @@ public final class GearScoreCalculator
 			return GearScoreComparison.unknownItem();
 		}
 
-		List<WornItem> current = worn == null ? Collections.<WornItem>emptyList() : worn;
+		if (worn == null)
+		{
+			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
+		}
+
+		List<WornItem> current = worn;
 		Map<Integer, WornItem> bySlot = indexBySlot(current);
 		List<Integer> affected = affectedSlots(candidate, bySlot, source);
 		if (affected == null)

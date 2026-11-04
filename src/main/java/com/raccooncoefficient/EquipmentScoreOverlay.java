@@ -36,7 +36,7 @@ public class EquipmentScoreOverlay extends Overlay
 	{
 		this.client = client;
 		this.stats = stats;
-		this.calculator = GearScoreCalculator.wave2(names);
+		this.calculator = GearScoreCalculator.wave3(names);
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.MANUAL);
 		drawAfterInterface(InterfaceID.EQUIPMENT);
