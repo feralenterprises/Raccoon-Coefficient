@@ -57,7 +57,21 @@ public final class GearScoreText
 				break;
 			case UNKNOWN:
 			default:
-				text.append(color(NEUTRAL, "\u2192 ?"));
+				if (comparison.getBaseDelta() != null)
+				{
+					BigDecimal baseDelta = comparison.getBaseDelta();
+					Color tint = baseDelta.signum() > 0 ? BETTER
+						: baseDelta.signum() < 0 ? WORSE : NEUTRAL;
+					String arrow = baseDelta.signum() > 0 ? "\u2191"
+						: baseDelta.signum() < 0 ? "\u2193" : "\u2192";
+					text.append("Base ");
+					text.append(color(tint, arrow + " " + formatDelta(baseDelta)));
+					text.append(color(NEUTRAL, " (total ?)"));
+				}
+				else
+				{
+					text.append(color(NEUTRAL, "\u2192 ?"));
+				}
 				break;
 		}
 		return text.toString();

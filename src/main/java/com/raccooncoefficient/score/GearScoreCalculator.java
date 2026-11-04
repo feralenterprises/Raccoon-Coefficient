@@ -173,6 +173,24 @@ public final class GearScoreCalculator
 			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
 		}
 
+		// The known base-stat change can be computed from ONLY displaced slots.
+		// Missing unrelated gear must not be silently treated as zero, and an
+		// unresolved effect must not suppress an otherwise verified base delta.
+		BigDecimal baseDelta = scoreBonus(candidate);
+		for (Integer slot : affected)
+		{
+			WornItem removed = bySlot.get(slot);
+			if (removed != null)
+			{
+				EquipmentBonus removedBonus = source.getVerifiedBonus(removed.getItemId());
+				if (removedBonus == null)
+				{
+					return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
+				}
+				baseDelta = baseDelta.subtract(scoreBonus(removedBonus));
+			}
+		}
+
 		List<WornItem> after = new ArrayList<WornItem>(current.size() + 1);
 		for (int i = 0; i < current.size(); i++)
 		{
@@ -190,13 +208,28 @@ public final class GearScoreCalculator
 
 		GearScoreBreakdown before = score(current, source);
 		GearScoreBreakdown next = score(after, source);
-		if (!before.isExtensionDataComplete() || !next.isExtensionDataComplete())
+		BigDecimal itemScore = round1(scoreBonus(candidate));
+
+		if (!before.isComplete() || !next.isComplete())
 		{
-			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
+			// Wave 1's legacy contract allows a known swap delta when
+			// unrelated unknown equipment stays in the same worn slots.
+			// The unchanged contribution cancels from the relative difference.
+			// Preserve that behavior when NO conditional extensions exist.
+			if (setBonuses.isEmpty() && weaponPassives.isEmpty()
+				&& before.isExtensionDataComplete() && next.isExtensionDataComplete())
+			{
+				return GearScoreComparison.knownItem(itemScore, round1(baseDelta));
+			}
+			// Wave 2/3 conditional effects can depend on other worn slots,
+			// so only the verified base portion is safe to present.
+			return GearScoreComparison.knownItemBaseOnlyDelta(itemScore, round1(baseDelta));
 		}
 
+		// A hovered total delta must agree with the two one-decimal totals
+		// the player can actually see before and after the equipment change.
 		BigDecimal delta = next.displayedTotal().subtract(before.displayedTotal());
-		return GearScoreComparison.knownItem(round1(scoreBonus(candidate)), delta);
+		return GearScoreComparison.knownItem(itemScore, delta);
 	}
 
 	/**
