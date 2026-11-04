@@ -3,7 +3,7 @@
 Baseline: Wave 5 `bf80e1c041ee4a394141bdf8648c386fd3afd340`
 Date: 2026-11-04
 Repository: `feralenterprises/Raccoon-Coefficient`
-Status: CODED pending CI; NOT NATIVE VERIFIED; OWNER ACCEPTANCE NOT GRANTED
+Status: BUILT (GitHub Actions Java build & tests passed); NOT NATIVE VERIFIED; OWNER ACCEPTANCE NOT GRANTED
 
 ## Verified defects in the actual source
 
@@ -22,11 +22,11 @@ No charge/broken-state tracking, TPT, Project Burrow or HoverLite import, accoun
 ## FERAL-VERIFY-001
 
 TICKET: RC-QA-006
-STATUS: CODED (await CI)
+STATUS: BUILT (NOT NATIVE VERIFIED)
 WHAT CHANGED: guard false-positive hover fallback, guard unavailable worn item arrays, mark unavailable equipment incomplete in all scoring factories
 EXACT FILES CHANGED: EquipmentHover.java, WornEquipment.java, score/GearScoreCalculator.java, SourceHardeningTest.java, this QA document, isolated CI workflow
 WHAT THE PLAYER CAN NOW DO: source-level avoidance of misleading hover and missing-equipment values; native experience unverified
-EVIDENCE: GitHub commit/PR and standalone CI receipt when complete
+EVIDENCE: [isolated GitHub Actions run #41887149533](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41887149533) passed: `:compileJava`, `:test`, `:build`, `BUILD SUCCESSFUL in 31s`; [CI test/JAR artifact](https://github.com/feralenterprises/Raccoon-Coefficient/actions/runs/41887149533/artifacts/13351008326). Runs on the prior source head; this documentation-only amendment does not modify production code.
 OWNER TEST STEPS: NONE TODAY
 STILL BROKEN: native hover/header behavior unverified, set/passive numeric scoring unapproved
 NEXT ACTION: CI, QA review, later limited owner-native tests
