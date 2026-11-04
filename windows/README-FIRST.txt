@@ -1,4 +1,4 @@
-RACCOON COEFFICIENT | HELMET TOTAL DISPLAY TEST BUILD
+RACCOON COEFFICIENT | HELMET TOTAL DISPLAY NATIVE FIX RC-UI-015
 =================================================
 
 YOUR JAVA 17 INSTALLATION IS FINE.
@@ -43,11 +43,16 @@ If the portable launcher displays an exception, send the error text from
 its window. The portable JAR is a developer client, not the publicly supported
 RuneLite Plugin Hub build. Windows native login/UI has not been verified.
 
-SCREEN UPDATE (RC-UI-014): When you open Equip Your Character, look for
-Gear Score centered ABOVE the helmet, BELOW the orange title. Total updates
-when worn gear changes. The previous version attempted to render beside the
-title and could hide the label. The gear strength/weapon weighting is still
-the ORIGINAL v1 formula while a balanced v2 is researched.
+SCREEN FIX (RC-UI-015): The prior helmet UI build passed synthetic tests but
+did NOT appear in the owner's actual RuneLite screenshot. This version
+routes the total through RuneLite's top-level widget overlay rendering phase
+(the same phase that works for item tooltip overlays) and uses the real
+helmet widget's bounds, including a fallback for missing panel dimensions.
+Open Equip Your Character and look ABOVE your helmet, BELOW the title.
+If still missing, read the START window and send us the line beginning
+"Raccoon Coefficient total:". The native status tells us whether RuneLite
+saw the helmet widget, hid the panel, or blocked layout.
+The original score weighting is unchanged while a balanced v2 is studied.
 
 This bundle does NOT replace or integrate HoverLite, TPT, or Burrow.
 No merge or release authorized.

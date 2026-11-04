@@ -1,0 +1,162 @@
+name: RC UI015 Native Invisible Total Fix Build
+
+on:
+  push:
+    branches:
+      - feature/rc-ui015-top-level-render-fix-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout authoritative Raccoon Coefficient source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Java 17 for Java 11 target
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Restrict changes to total score rendering fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only 8b4942852bec37aa08ec8582e441b169f3f5897e HEAD > /tmp/changed.txt
+          if grep -Ev '^(src/main/java/com/raccooncoefficient/(EquipmentScoreOverlay|GearScoreHelmetLayout)\.java|src/test/java/com/raccooncoefficient/(GearScoreHelmetLayoutTest|EquipmentScoreOverlayRenderTest)\.java|docs/RC-UI-015-INVISIBLE-TOTAL-FIX\.md|windows/README-FIRST\.txt|\.github/workflows/rc-ui015-live-render-build\.yml)$' /tmp/changed.txt; then
+            echo "Out-of-scope source change detected"
+            exit 1
+          fi
+      - name: Clean compile and test standalone plugin
+        run: bash ./gradlew --no-daemon --stacktrace clean build shadowJar
+      - name: Verify compiled top-level total score fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR="build/libs/raccoon-coefficient-1.0.0.jar"
+          test -s "$JAR"
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPlugin.class'
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/EquipmentScoreOverlay.class'
+          jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/GearScoreHelmetLayout.class'
+          grep -Fq 'setLayer(OverlayLayer.ABOVE_WIDGETS);' src/main/java/com/raccooncoefficient/EquipmentScoreOverlay.java
+          if grep -Fq 'drawAfterInterface(InterfaceID.EQUIPMENT);' src/main/java/com/raccooncoefficient/EquipmentScoreOverlay.java; then
+            echo "Legacy equipment-only hook still active"
+            exit 1
+          fi
+          sha256sum "$JAR"
+      - name: Verify compiled portable developer launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORTABLE="build/libs/raccoon-coefficient-1.0.0-all.jar"
+          test -s "$PORTABLE"
+          unzip -p "$PORTABLE" META-INF/MANIFEST.MF | grep -F 'Main-Class: com.raccooncoefficient.RaccoonCoefficientPluginTest'
+          jar tf "$PORTABLE" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPluginTest.class'
+          jar tf "$PORTABLE" | grep -Fx 'net/runelite/client/RuneLite.class'
+          jar tf "$PORTABLE" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPlugin.class'
+          sha256sum "$PORTABLE"
+      - name: Smoke-check assertions-enabled developer client bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'java -ea -jar "%CLIENT%" --developer-mode --debug' windows/START-RACCOON.bat
+          grep -Fq 'java -ea -jar "%CLIENT%" --developer-mode --debug' windows/REBUILD-AND-START.bat
+          # Deliberately no interactive RuneLite login in CI. Confirm only
+          # that the real launcher enters the RuneLite bootstrap with -ea.
+          set +e
+          timeout 12s java -ea -Djava.awt.headless=true -jar build/libs/raccoon-coefficient-1.0.0-all.jar --developer-mode --debug > /tmp/rc-boot-smoke.log 2>&1
+          BOOT_EXIT=$?
+          set -e
+          if ! grep -Fq 'starting up, args:' /tmp/rc-boot-smoke.log; then
+            tail -100 /tmp/rc-boot-smoke.log
+            echo "Portable entrypoint did not reach RuneLite bootstrap"
+            exit 1
+          fi
+          if grep -q 'Assertions are not enabled' /tmp/rc-boot-smoke.log; then
+            echo "Invalid developer loader launch settings"
+            exit 1
+          fi
+          echo "Bootstrap reached; headless mode/network prevent native gameplay verification (exit ${BOOT_EXIT})."
+      - name: Assemble fully self-contained source and binary Windows ZIP
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import shutil
+          import zipfile
+          from pathlib import Path
+
+          root=Path.cwd()
+          out=root/'build'/'windows-oneclick'
+          pkg=out/'RACCOON-COEFFICIENT-WINDOWS'
+          target=pkg/'Raccoon-Coefficient'
+          if out.exists(): shutil.rmtree(out)
+          pkg.mkdir(parents=True)
+          shutil.copytree(root,target,ignore=shutil.ignore_patterns(
+              '.git','build','windows','.gradle','.idea','out','*.iml'
+          ))
+          for file in ('START-RACCOON.bat','REBUILD-AND-START.bat',
+                       'BUILD-ONLY.bat','README-FIRST.txt'):
+              shutil.copy2(root/'windows'/file,pkg/file)
+          jar=root/'build'/'libs'/'raccoon-coefficient-1.0.0.jar'
+          built=pkg/'BUILT-JAR'/'raccoon-coefficient-1.0.0.jar'
+          built.parent.mkdir()
+          shutil.copy2(jar,built)
+          local=target/'build'/'libs'/'raccoon-coefficient-1.0.0.jar'
+          local.parent.mkdir(parents=True)
+          shutil.copy2(jar,local)
+          portable=root/'build'/'libs'/'raccoon-coefficient-1.0.0-all.jar'
+          portable_copy=pkg/'PORTABLE-CLIENT'/portable.name
+          portable_copy.parent.mkdir(parents=True)
+          shutil.copy2(portable,portable_copy)
+          sha=hashlib.sha256(jar.read_bytes()).hexdigest()
+          portable_sha=hashlib.sha256(portable.read_bytes()).hexdigest()
+          (pkg/'VERIFIED-BUILD-SHA256.txt').write_text(
+              'Helmet total UI source commit: '+__import__('os').environ.get('GITHUB_SHA','unknown')+'\n' +
+              'Helmet total score JAR SHA256: '+sha+'\n' +
+              'Portable RuneLite developer client JAR SHA256: '+portable_sha+'\n' +
+              'Build: Java 17, Java 11 target, Gradle 8.10, RuneLite 1.13.6\n' +
+              'Native Windows launch: NOT VERIFIED\n' +
+              'Hub submission: NOT AUTHORIZED\n',encoding='utf-8'
+          )
+          assert (target/'gradlew.bat').is_file()
+          assert (target/'gradle/wrapper/gradle-wrapper.jar').is_file()
+          assert (target/'src/test/java/com/raccooncoefficient/RaccoonCoefficientPluginTest.java').is_file()
+          assert (target/'src/main/java/com/raccooncoefficient/RaccoonCoefficientPlugin.java').is_file()
+          z=root/'build'/'RACCOON-HELMET-TOTAL-RENDER-FIX.zip'
+          with zipfile.ZipFile(z,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=7) as zipf:
+              for path in sorted(pkg.rglob('*')):
+                  if path.is_file():
+                      zipf.write(path,path.relative_to(pkg.parent))
+          with zipfile.ZipFile(z) as verify:
+              assert verify.testzip() is None
+              names=verify.namelist()
+              for required in (
+                  'RACCOON-COEFFICIENT-WINDOWS/START-RACCOON.bat',
+                  'RACCOON-COEFFICIENT-WINDOWS/REBUILD-AND-START.bat',
+                  'RACCOON-COEFFICIENT-WINDOWS/BUILD-ONLY.bat',
+                  'RACCOON-COEFFICIENT-WINDOWS/Raccoon-Coefficient/gradlew.bat',
+                  'RACCOON-COEFFICIENT-WINDOWS/Raccoon-Coefficient/gradle/wrapper/gradle-wrapper.jar',
+                  'RACCOON-COEFFICIENT-WINDOWS/BUILT-JAR/raccoon-coefficient-1.0.0.jar',
+                  'RACCOON-COEFFICIENT-WINDOWS/PORTABLE-CLIENT/raccoon-coefficient-1.0.0-all.jar',
+              ):
+                  assert required in names,required
+          print('WINDOWS_ZIP=',z)
+          print('WINDOWS_ZIP_BYTES=',z.stat().st_size)
+          print('WINDOWS_ZIP_FILES=',len(names))
+          print('WINDOWS_ZIP_SHA256=',hashlib.sha256(z.read_bytes()).hexdigest())
+          PY
+      - name: Upload the ready-to-extract Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: RACCOON-HELMET-TOTAL-RENDER-FIX
+          path: build/RACCOON-HELMET-TOTAL-RENDER-FIX.zip
+          if-no-files-found: error
+          retention-days: 30

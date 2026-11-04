@@ -39,20 +39,26 @@ public class EquipmentScoreOverlayRenderTest
 		return null;
 	}
 
-	private static Widget widget(Rectangle bounds)
+	private static Widget widget(Rectangle bounds, boolean hidden)
 	{
 		return proxy(Widget.class,(p,m,args) ->
 		{
 			if ("getBounds".equals(m.getName())) return bounds;
-			if ("isHidden".equals(m.getName())) return false;
+			if ("isHidden".equals(m.getName())) return hidden;
 			return other(m.getReturnType());
 		});
 	}
 
 	private static Client client(Item[][] wornState, boolean hasHelmetWidget)
 	{
-		Widget panel = widget(PANEL);
-		Widget helmet = widget(HELMET);
+		return client(wornState, hasHelmetWidget, PANEL, false, false);
+	}
+
+	private static Client client(Item[][] wornState, boolean hasHelmetWidget,
+		Rectangle panelBounds, boolean panelHidden, boolean helmetHidden)
+	{
+		Widget panel = widget(panelBounds, panelHidden);
+		Widget helmet = widget(HELMET, helmetHidden);
 		ItemContainer container = proxy(ItemContainer.class,(p,m,args) ->
 			"getItems".equals(m.getName()) ? wornState[0] : other(m.getReturnType()));
 		return proxy(Client.class,(p,m,args) ->
@@ -109,9 +115,9 @@ public class EquipmentScoreOverlayRenderTest
 		assertEquals("Must not draw inside helmet icon",
 			0,opaque(image,272,240,334,290));
 		assertEquals(OverlayPosition.DYNAMIC,overlay.getPosition());
-		assertEquals(OverlayLayer.MANUAL,overlay.getLayer());
-		assertTrue(overlay.getDrawHooks().contains(
-			(InterfaceID.EQUIPMENT << 16) | 0xffff));
+		assertEquals(OverlayLayer.ABOVE_WIDGETS,overlay.getLayer());
+		assertTrue("Top-level layer registered without a fragile equipment-only hook",
+			overlay.getDrawHooks().isEmpty());
 	}
 
 	@Test public void equipmentChangeRedrawsTheActualDisplayedScore()
@@ -141,6 +147,38 @@ public class EquipmentScoreOverlayRenderTest
 			client(worn,false),STATS,GearScoreCalculator.wave1());
 		BufferedImage image=render(overlay);
 		assertEquals(0,opaque(image,0,0,image.getWidth(),image.getHeight()));
+	}
+
+
+	@Test public void zeroSizedEquipmentRootStillShowsTotalAboveTheObservedHelmet()
+	{
+		Item[][] worn={new Item[14]};
+		worn[0][EquipmentSlot.HEAD]=new Item(100,1);
+		EquipmentScoreOverlay overlay=new EquipmentScoreOverlay(
+			client(worn,true,new Rectangle(0,0,0,0),false,false),
+			STATS,GearScoreCalculator.wave1());
+		BufferedImage image=render(overlay);
+		assertTrue("Invalid panel root bounds must not discard visible helmet slot",
+			opaque(image,205,207,405,236)>25);
+		assertEquals(0,opaque(image,150,129,470,188));
+	}
+
+	@Test public void genuinelyHiddenEquipmentWindowNeverLeaksScoreIntoGame()
+	{
+		Item[][] worn={new Item[14]};
+		worn[0][EquipmentSlot.HEAD]=new Item(100,1);
+		EquipmentScoreOverlay overlay=new EquipmentScoreOverlay(
+			client(worn,true,PANEL,true,false),STATS,GearScoreCalculator.wave1());
+		assertEquals(0,opaque(render(overlay),0,0,1200,800));
+	}
+
+	@Test public void hiddenHelmetDoesNotAccidentallyPaintInOtherInterfaces()
+	{
+		Item[][] worn={new Item[14]};
+		worn[0][EquipmentSlot.HEAD]=new Item(100,1);
+		EquipmentScoreOverlay overlay=new EquipmentScoreOverlay(
+			client(worn,true,PANEL,false,true),STATS,GearScoreCalculator.wave1());
+		assertEquals(0,opaque(render(overlay),0,0,1200,800));
 	}
 
 	@Test public void unknownEquipmentShowsAnUnverifiedScoreLine()
