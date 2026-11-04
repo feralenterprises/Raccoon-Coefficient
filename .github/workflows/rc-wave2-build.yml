@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feature/rc-wave2-set-effects-20261104
+  pull_request:
+    branches:
+      - cursor/raccoon-coefficient-7e42
   workflow_dispatch:
 
 permissions:
