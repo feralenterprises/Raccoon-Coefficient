@@ -13,9 +13,6 @@ import java.awt.Rectangle;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetUtil;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -80,40 +77,11 @@ public class GearScoreTooltipOverlay extends Overlay
 
 	private int hoveredItemId()
 	{
-		if (client.isMenuOpen())
+		if (client.isMenuOpen() || client.getMenu() == null)
 		{
 			return EquipmentHover.NO_ITEM;
 		}
-
-		if (client.getMenu() == null)
-		{
-			return EquipmentHover.NO_ITEM;
-		}
-		MenuEntry[] menu = client.getMenu().getMenuEntries();
-		if (menu == null || menu.length == 0)
-		{
-			return EquipmentHover.NO_ITEM;
-		}
-
-		Widget widget = menu[menu.length - 1].getWidget();
-		if (widget == null)
-		{
-			return EquipmentHover.NO_ITEM;
-		}
-
-		int childItemId = EquipmentHover.NO_ITEM;
-		Widget child = widget.getChild(1);
-		if (child != null)
-		{
-			childItemId = child.getItemId();
-		}
-
-		return EquipmentHover.itemId(
-			WidgetUtil.componentToInterface(widget.getId()),
-			widget.getId(),
-			widget.getParentId(),
-			widget.getItemId(),
-			childItemId);
+		return HoveredEquipmentItem.resolve(client.getMenu().getMenuEntries());
 	}
 
 	/**

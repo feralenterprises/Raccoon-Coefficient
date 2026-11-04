@@ -24,9 +24,6 @@ import net.runelite.client.ui.overlay.OverlayPosition;
  */
 public class EquipmentScoreOverlay extends Overlay
 {
-	private static final int NOMINAL_WIDTH = 500;
-	private static final int NOMINAL_HEIGHT = 324;
-
 	private final Client client;
 	private final RuneLiteItemStatSource stats;
 	private final GearScoreCalculator calculator;
@@ -71,40 +68,47 @@ public class EquipmentScoreOverlay extends Overlay
 	private void drawLine(Graphics2D graphics, Rectangle bounds, Widget root, String line)
 	{
 		Font previousFont = graphics.getFont();
-		Font font = FontManager.getRunescapeSmallFont();
-		graphics.setFont(font);
-
-		int baseline = bounds.y + Math.round(bounds.height * 22f / NOMINAL_HEIGHT);
-		int x = bounds.x + Math.max(6, Math.round(bounds.width * 8f / NOMINAL_WIDTH));
-		int clipRight = bounds.x + Math.round(bounds.width * 0.32f);
-		Widget title = findTitle(root, bounds, 0);
-		if (title != null)
-		{
-			Rectangle titleBounds = title.getBounds();
-			int alignedBaseline = titleBounds.y + titleBounds.height - 2;
-			int maxBaseline = bounds.y + Math.round(bounds.height * 0.09f);
-			if (alignedBaseline <= maxBaseline && titleBounds.x - 4 > x + 80)
-			{
-				baseline = alignedBaseline;
-				clipRight = Math.min(clipRight, titleBounds.x - 4);
-			}
-		}
-
-		int iconTop = baseline - 11;
+		Color previousColor = graphics.getColor();
 		Rectangle previousClip = graphics.getClipBounds();
-		graphics.clipRect(bounds.x, iconTop - 1, Math.max(0, clipRight - bounds.x), baseline - iconTop + 4);
 		try
 		{
+			Font font = FontManager.getRunescapeSmallFont();
+			graphics.setFont(font);
+
+			String compact = GearScoreText.compactEquipmentLine(line);
+			Widget title = findTitle(root, bounds, 0);
+			Rectangle titleBounds = title == null ? null : title.getBounds();
+			GearScoreHeaderLayout.Placement placement = GearScoreHeaderLayout.choose(
+				bounds, titleBounds,
+				graphics.getFontMetrics().stringWidth(line),
+				graphics.getFontMetrics().stringWidth(compact));
+			if (placement.getLabel() == GearScoreHeaderLayout.Label.HIDDEN)
+			{
+				return; // don't collide with the game title or show a truncated number
+			}
+
+			String display = placement.getLabel() == GearScoreHeaderLayout.Label.FULL ? line : compact;
+			int baseline = placement.getBaseline();
+			int iconTop = baseline - RaccoonMark.HEIGHT;
+			int x = placement.getX();
+			int clipWidth = placement.getRight() - bounds.x;
+			if (clipWidth <= 0)
+			{
+				return;
+			}
+			graphics.clipRect(bounds.x, iconTop - 1, clipWidth, RaccoonMark.HEIGHT + 4);
 			RaccoonMark.draw(graphics, x, iconTop);
+
 			int textX = x + RaccoonMark.WIDTH + 3;
 			graphics.setColor(Color.BLACK);
-			graphics.drawString(line, textX + 1, baseline + 1);
+			graphics.drawString(display, textX + 1, baseline + 1);
 			graphics.setColor(GearScoreText.EQUIPMENT_ORANGE);
-			graphics.drawString(line, textX, baseline);
+			graphics.drawString(display, textX, baseline);
 		}
 		finally
 		{
 			graphics.setFont(previousFont);
+			graphics.setColor(previousColor);
 			graphics.setClip(previousClip);
 		}
 	}

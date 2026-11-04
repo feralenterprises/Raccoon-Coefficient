@@ -56,6 +56,52 @@ public final class EquipmentHover
 		return NO_ITEM;
 	}
 
+	/**
+	 * Resolve a menu entry only if its widget is a known inventory/equipment
+	 * surface. Prefer the menu's own item ID, which identifies the specific
+	 * item under the cursor, over a container or generic parent widget ID.
+	 * A direct child item widget may have its parent as the item container.
+	 * Unrelated menus and missing IDs are never guessed.
+	 */
+	public static int menuItemId(
+		int groupId,
+		int widgetId,
+		int parentId,
+		int menuItemId,
+		int widgetItemId)
+	{
+		if (!supportedSurface(groupId, widgetId, parentId))
+		{
+			return NO_ITEM;
+		}
+		if (menuItemId > 0)
+		{
+			return menuItemId;
+		}
+		return positive(widgetItemId);
+	}
+
+	private static boolean supportedSurface(int groupId, int widgetId, int parentId)
+	{
+		if (widgetId == InterfaceID.Inventory.ITEMS || parentId == InterfaceID.Inventory.ITEMS
+			|| widgetId == InterfaceID.Bankmain.ITEMS || parentId == InterfaceID.Bankmain.ITEMS
+			|| widgetId == InterfaceID.SharedBank.ITEMS || parentId == InterfaceID.SharedBank.ITEMS
+			|| widgetId == InterfaceID.GeOffersSide.ITEMS || parentId == InterfaceID.GeOffersSide.ITEMS
+			|| EQUIPMENT_SLOTS.contains(Integer.valueOf(widgetId))
+			|| EQUIPMENT_SLOTS.contains(Integer.valueOf(parentId)))
+		{
+			return true;
+		}
+		// Worn equipment, side equipment, and bank side slots are item
+		// surfaces, but their dynamic child IDs can change across UIs.
+		return groupId == InterfaceID.WORNITEMS
+			|| groupId == InterfaceID.EQUIPMENT_SIDE
+			|| groupId == InterfaceID.BANKSIDE
+			|| groupId == InterfaceID.SHARED_BANK_SIDE
+			|| (groupId == InterfaceID.BANKMAIN
+				&& parentId == InterfaceID.Bankside.WORNOPS);
+	}
+
 	private static int positive(int itemId)
 	{
 		return itemId > 0 ? itemId : NO_ITEM;
