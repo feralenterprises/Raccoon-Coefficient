@@ -28,12 +28,16 @@ final class ScoreTooltipQueue
 			return;
 		}
 
-		for (Tooltip tooltip : manager.getTooltips())
+		for (int i = 0; i < manager.getTooltips().size(); i++)
 		{
+			Tooltip tooltip = manager.getTooltips().get(i);
 			if (tooltip != null && tooltip.getComponent() instanceof ScoreComponent)
 			{
-				// A second render within this tooltip cycle must not stack an
-				// identical-looking Raccoon score line.
+				// A repeated draw hook may see fresher hovered-item evidence.
+				// Replace ONLY the component owned by this plugin, in-place,
+				// so the label is current without duplicating it or changing
+				// third-party tooltip order.
+				manager.getTooltips().set(i, new Tooltip(scoreComponent));
 				return;
 			}
 		}

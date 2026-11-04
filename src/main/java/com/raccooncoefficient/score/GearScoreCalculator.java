@@ -5,8 +5,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Sums worn equipment into one score.
@@ -85,11 +87,18 @@ public final class GearScoreCalculator
 		List<WornItem> items = worn == null ? Collections.<WornItem>emptyList() : worn;
 		BigDecimal base = BigDecimal.ZERO;
 		int unknownItems = 0;
+		boolean duplicateSlots = WornLayout.hasDuplicateOccupiedSlot(worn);
+		Set<Integer> counted = new HashSet<Integer>();
 
 		for (int i = 0; i < items.size(); i++)
 		{
 			WornItem item = items.get(i);
 			if (item == null || item.getItemId() < 0)
+			{
+				continue;
+			}
+			// A corrupted snapshot must not pay out two item scores from one slot.
+			if (!counted.add(Integer.valueOf(item.getSlotIndex())))
 			{
 				continue;
 			}
@@ -129,7 +138,7 @@ public final class GearScoreCalculator
 		// A null worn list means UNAVAILABLE, not an empty fully observed kit.
 		// Keep the legacy 0.0 subtotal, but never certify it as complete.
 		return new GearScoreBreakdown(base, set, passive,
-			worn != null && unknownItems == 0, extensionsKnown, unknownItems);
+			worn != null && !duplicateSlots && unknownItems == 0, extensionsKnown, unknownItems);
 	}
 
 	public BigDecimal scoreBonus(EquipmentBonus bonus)
@@ -163,7 +172,7 @@ public final class GearScoreCalculator
 			return GearScoreComparison.unknownItem();
 		}
 
-		if (worn == null)
+		if (worn == null || WornLayout.hasDuplicateOccupiedSlot(worn))
 		{
 			return GearScoreComparison.knownItemUnknownDelta(round1(scoreBonus(candidate)));
 		}

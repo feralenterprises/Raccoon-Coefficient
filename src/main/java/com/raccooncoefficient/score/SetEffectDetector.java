@@ -171,7 +171,7 @@ public final class SetEffectDetector
 	/** Returns one result per catalogued effect. */
 	public List<Effect> evaluate(List<WornItem> worn, ItemNameSource names)
 	{
-		if (worn == null || names == null)
+		if (worn == null || names == null || WornLayout.hasDuplicateOccupiedSlot(worn))
 		{
 			List<Effect> unknown = new ArrayList<Effect>();
 			for (Rule rule : RULES)
