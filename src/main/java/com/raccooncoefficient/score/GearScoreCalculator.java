@@ -60,6 +60,21 @@ public final class GearScoreCalculator
 			Collections.<WeaponPassive>emptyList());
 	}
 
+	/**
+	 * Wave 3 includes Wave 2 armour detection and weapon-passive identification.
+	 * Neither extension supplies an invented numerical coefficient: active or
+	 * contextual effects mark the aggregate as an incomplete base subtotal.
+	 */
+	public static GearScoreCalculator wave3(SetEffectDetector.ItemNameSource identities)
+	{
+		return new GearScoreCalculator(
+			GearScoreCoefficients.wave1(),
+			Collections.<SetBonus>singletonList(
+				new PendingSetEffectBonus(new SetEffectDetector(), identities)),
+			Collections.<WeaponPassive>singletonList(
+				new PendingWeaponPassiveBonus(new WeaponPassiveDetector(), identities)));
+	}
+
 	public GearScoreCoefficients getCoefficients()
 	{
 		return coefficients;
