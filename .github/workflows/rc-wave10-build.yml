@@ -1,0 +1,47 @@
+name: RC Wave 10 Source Calibration
+
+on:
+  push:
+    branches:
+      - feature/rc-wave10-calibration-ledger-20261104
+  pull_request:
+    branches:
+      - feature/rc-wave9-unified-integration-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout standalone Raccoon Coefficient
+        uses: actions/checkout@v4
+      - name: JDK 17 (Java 11 target)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: No cross-plugin source/build dependencies
+        shell: bash
+        run: |
+          if grep -RniE '(^import |implementation |compileOnly |runtimeOnly ).*(trashpandatracker|hoverlite|gg\.feral\.burrow)' src/main/java build.gradle; then
+            echo "Forbidden cross-plugin dependency"
+            exit 1
+          fi
+      - name: Full production compile and JUnit regressions
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+      - name: Upload build and test receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-wave10-calibration-receipts
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/libs/**
+          if-no-files-found: warn
