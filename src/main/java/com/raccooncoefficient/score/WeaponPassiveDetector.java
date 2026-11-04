@@ -85,7 +85,7 @@ public final class WeaponPassiveDetector
 		List<WornItem> equipment,
 		SetEffectDetector.ItemNameSource identities)
 	{
-		if (equipment == null || identities == null)
+		if (equipment == null || identities == null || WornLayout.hasDuplicateOccupiedSlot(equipment))
 		{
 			return all(State.UNKNOWN, State.UNKNOWN, State.UNKNOWN);
 		}
