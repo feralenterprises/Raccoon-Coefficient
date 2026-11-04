@@ -26,6 +26,18 @@ public final class GearScoreText
 		return "Gear Score: " + number;
 	}
 
+	/** Short fallback used only when the full Equipment Stats header cannot fit. */
+	public static String compactEquipmentLine(String fullLine)
+	{
+		if (fullLine == null)
+		{
+			return "GS: ?";
+		}
+		return fullLine.startsWith("Gear Score: ")
+			? "GS: " + fullLine.substring("Gear Score: ".length())
+			: fullLine;
+	}
+
 	/**
 	 * Tooltip body, or null when the hovered id is not verified equipment and
 	 * is not currently worn. The first line is left untagged so it stays white.
