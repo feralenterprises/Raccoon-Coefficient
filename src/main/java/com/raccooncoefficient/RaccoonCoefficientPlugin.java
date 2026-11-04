@@ -1,7 +1,7 @@
 package com.raccooncoefficient;
 
 import javax.inject.Inject;
-import net.runelite.api.InventoryID;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
@@ -59,7 +59,7 @@ public class RaccoonCoefficientPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
-		if (event.getContainerId() == InventoryID.WORN.getId())
+		if (event.getContainerId() == InventoryID.WORN)
 		{
 			equipmentTotalWidget.refresh();
 		}
