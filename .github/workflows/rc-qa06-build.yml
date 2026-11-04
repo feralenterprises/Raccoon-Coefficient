@@ -1,0 +1,47 @@
+name: Wave 6 source hardening build
+
+on:
+  push:
+    branches:
+      - feature/rc-qa06-source-hardening-20261104
+  pull_request:
+    branches:
+      - feature/rc-wave5-hover-ui-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Raccoon Coefficient only
+        uses: actions/checkout@v4
+      - name: Install Java 17 (Java 11 target)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Verify standalone plugin boundary
+        shell: bash
+        run: |
+          if grep -RniE '(^import |implementation |compileOnly |runtimeOnly ).*(trashpandatracker|hoverlite|gg\.feral\.burrow)' src/main/java build.gradle; then
+            echo 'Forbidden cross-plugin dependency'
+            exit 1
+          fi
+      - name: Compile and execute all JUnit regressions
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+      - name: Upload test and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-qa06-receipts
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/libs/**
+          if-no-files-found: warn
