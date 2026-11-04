@@ -126,7 +126,10 @@ public final class GearScoreCalculator
 			passive = passive.add(part);
 		}
 
-		return new GearScoreBreakdown(base, set, passive, unknownItems == 0, extensionsKnown, unknownItems);
+		// A null worn list means UNAVAILABLE, not an empty fully observed kit.
+		// Keep the legacy 0.0 subtotal, but never certify it as complete.
+		return new GearScoreBreakdown(base, set, passive,
+			worn != null && unknownItems == 0, extensionsKnown, unknownItems);
 	}
 
 	public BigDecimal scoreBonus(EquipmentBonus bonus)

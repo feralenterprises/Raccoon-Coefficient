@@ -24,6 +24,10 @@ final class WornEquipment
 		}
 
 		Item[] items = container.getItems();
+		if (items == null)
+		{
+			return null; // container exists but contents are not available
+		}
 		List<WornItem> worn = new ArrayList<WornItem>(items.length);
 		for (int slot = 0; slot < items.length; slot++)
 		{
@@ -39,6 +43,10 @@ final class WornEquipment
 
 	static boolean contains(List<WornItem> worn, int itemId)
 	{
+		if (worn == null || itemId <= 0)
+		{
+			return false;
+		}
 		for (int i = 0; i < worn.size(); i++)
 		{
 			if (worn.get(i).getItemId() == itemId)

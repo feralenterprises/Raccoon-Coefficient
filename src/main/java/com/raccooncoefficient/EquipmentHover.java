@@ -78,7 +78,30 @@ public final class EquipmentHover
 		{
 			return menuItemId;
 		}
-		return positive(widgetItemId);
+		// A container widget (for example Inventory.ITEMS) is not itself a
+		// uniquely hovered item. If the menu doesn't provide an item ID,
+		// use the widget's ID only for explicit slot or item-child surfaces.
+		// Unknown is safer than showing the first/stale item in a container.
+		if (explicitItemWidget(widgetId, parentId, groupId))
+		{
+			return positive(widgetItemId);
+		}
+		return NO_ITEM;
+	}
+
+	private static boolean explicitItemWidget(int widgetId, int parentId, int groupId)
+	{
+		return EQUIPMENT_SLOTS.contains(Integer.valueOf(widgetId))
+			|| EQUIPMENT_SLOTS.contains(Integer.valueOf(parentId))
+			|| parentId == InterfaceID.Inventory.ITEMS
+			|| parentId == InterfaceID.Bankmain.ITEMS
+			|| parentId == InterfaceID.SharedBank.ITEMS
+			|| parentId == InterfaceID.GeOffersSide.ITEMS
+			|| parentId == InterfaceID.Bankside.WORNOPS
+			|| groupId == InterfaceID.WORNITEMS
+			|| groupId == InterfaceID.EQUIPMENT_SIDE
+			|| groupId == InterfaceID.BANKSIDE
+			|| groupId == InterfaceID.SHARED_BANK_SIDE;
 	}
 
 	private static boolean supportedSurface(int groupId, int widgetId, int parentId)
