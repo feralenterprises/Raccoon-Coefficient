@@ -43,6 +43,31 @@ final class GearScoreHelmetLayout
 	{
 	}
 
+	/** A widget root can be zero-sized, while the child helmet is drawn. */
+	static boolean isUsablePanel(Rectangle panel, Rectangle helmet)
+	{
+		return panel != null && helmet != null && panel.width >= 160
+			&& panel.height >= 145 && panel.intersects(helmet);
+	}
+
+	/**
+	 * Derive a conservative window-size envelope around the actual visible
+	 * helmet. This is only used if RuneLite returns invalid root bounds. The
+	 * HELMET is always the anchor, not the derived panel.
+	 */
+	static Rectangle fallbackPanel(Rectangle helmet)
+	{
+		if (helmet == null || helmet.width < 20 || helmet.height < 20)
+		{
+			return null;
+		}
+		return new Rectangle(
+			helmet.x - helmet.width * 2,
+			helmet.y - helmet.height * 2,
+			Math.max(440, helmet.width * 13),
+			Math.max(300, helmet.height * 9));
+	}
+
 	static Placement choose(Rectangle panel, Rectangle helmet, int fullWidth, int compactWidth)
 	{
 		if (panel == null || helmet == null || panel.width < 160 || panel.height < 145
