@@ -3,6 +3,7 @@ package com.raccooncoefficient;
 import com.raccooncoefficient.score.GearScoreBreakdown;
 import com.raccooncoefficient.score.GearScoreCalculator;
 import com.raccooncoefficient.score.GearScoreText;
+import com.raccooncoefficient.score.ItemStatSource;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -18,22 +19,31 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * Draws one score line in the empty left side of the equipment stats title bar.
- * The overlay is hooked to interface 84, so client scripts that rebuild that
- * interface cannot wipe it, and later dialogs still paint over it.
+ * Draw the TOTAL equipped Gear Score above the helmet SLOT0 widget in the
+ * "Equip Your Character" interface. The player-supplied screenshot identifies
+ * the gap below the native title and above the helmet as the target.
+ *
+ * Uses RuneLite's draw-after-interface hook. It does not alter the Equipment
+ * interface, slot icons, hover tooltip overlay or locked Wave 1 score formula.
  */
 public class EquipmentScoreOverlay extends Overlay
 {
 	private final Client client;
-	private final RuneLiteItemStatSource stats;
+	private final ItemStatSource stats;
 	private final GearScoreCalculator calculator;
 
 	@Inject
 	EquipmentScoreOverlay(Client client, RuneLiteItemStatSource stats, RuneLiteItemNameSource names)
 	{
+		this(client, stats, GearScoreCalculator.wave3(names));
+	}
+
+	/** Test-only seam. Production always uses the injected RuneLite sources. */
+	EquipmentScoreOverlay(Client client, ItemStatSource stats, GearScoreCalculator calculator)
+	{
 		this.client = client;
 		this.stats = stats;
-		this.calculator = GearScoreCalculator.wave3(names);
+		this.calculator = calculator;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.MANUAL);
 		drawAfterInterface(InterfaceID.EQUIPMENT);
@@ -42,62 +52,61 @@ public class EquipmentScoreOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		Widget root = client.getWidget(InterfaceID.Equipment.UNIVERSE);
-		if (root == null)
+		Widget panel = client.getWidget(InterfaceID.Equipment.UNIVERSE);
+		Widget helmet = client.getWidget(InterfaceID.Equipment.SLOT0);
+		if (panel == null || helmet == null || panel.isHidden() || helmet.isHidden())
 		{
 			return null;
 		}
 
-		Rectangle bounds = root.getBounds();
-		if (bounds == null || bounds.width < 80 || bounds.height < 80)
+		Rectangle panelBounds = panel.getBounds();
+		Rectangle helmetBounds = helmet.getBounds();
+		if (panelBounds == null || helmetBounds == null)
 		{
 			return null;
 		}
 
 		java.util.List<com.raccooncoefficient.score.WornItem> worn = WornEquipment.read(client);
+		String line;
 		if (worn == null)
 		{
-			drawLine(graphics, bounds, root, "Gear Score: ?");
-			return null;
+			line = "Gear Score: ?";
 		}
-		GearScoreBreakdown score = calculator.score(worn, stats);
-		drawLine(graphics, bounds, root, GearScoreText.equipmentLine(score));
+		else
+		{
+			GearScoreBreakdown score = calculator.score(worn, stats);
+			line = GearScoreText.equipmentLine(score);
+		}
+
+		drawLine(graphics, panelBounds, helmetBounds, line);
 		return null;
 	}
 
-	private void drawLine(Graphics2D graphics, Rectangle bounds, Widget root, String line)
+	private void drawLine(Graphics2D graphics, Rectangle panel, Rectangle helmet, String line)
 	{
 		Font previousFont = graphics.getFont();
 		Color previousColor = graphics.getColor();
-		Rectangle previousClip = graphics.getClipBounds();
+		java.awt.Shape previousClip = graphics.getClip();
 		try
 		{
-			Font font = FontManager.getRunescapeSmallFont();
-			graphics.setFont(font);
-
+			graphics.setFont(FontManager.getRunescapeSmallFont());
 			String compact = GearScoreText.compactEquipmentLine(line);
-			Widget title = findTitle(root, bounds, 0);
-			Rectangle titleBounds = title == null ? null : title.getBounds();
-			GearScoreHeaderLayout.Placement placement = GearScoreHeaderLayout.choose(
-				bounds, titleBounds,
+			GearScoreHelmetLayout.Placement placement = GearScoreHelmetLayout.choose(
+				panel, helmet,
 				graphics.getFontMetrics().stringWidth(line),
 				graphics.getFontMetrics().stringWidth(compact));
-			if (placement.getLabel() == GearScoreHeaderLayout.Label.HIDDEN)
-			{
-				return; // don't collide with the game title or show a truncated number
-			}
-
-			String display = placement.getLabel() == GearScoreHeaderLayout.Label.FULL ? line : compact;
-			int baseline = placement.getBaseline();
-			int iconTop = baseline - RaccoonMark.HEIGHT;
-			int x = placement.getX();
-			int clipWidth = placement.getRight() - bounds.x;
-			if (clipWidth <= 0)
+			if (placement.getLabel() == GearScoreHelmetLayout.Label.HIDDEN)
 			{
 				return;
 			}
-			graphics.clipRect(bounds.x, iconTop - 1, clipWidth, RaccoonMark.HEIGHT + 4);
-			RaccoonMark.draw(graphics, x, iconTop);
+
+			String display = placement.getLabel() == GearScoreHelmetLayout.Label.FULL
+				? line : compact;
+			int baseline = placement.getBaseline();
+			int x = placement.getX();
+			// Only paint in the strip assigned to the score above SLOT0.
+			graphics.clipRect(x - 1, baseline - 16, placement.getWidth() + 3, 19);
+			RaccoonMark.draw(graphics, x, baseline - RaccoonMark.HEIGHT);
 
 			int textX = x + RaccoonMark.WIDTH + 3;
 			graphics.setColor(Color.BLACK);
@@ -111,52 +120,5 @@ public class EquipmentScoreOverlay extends Overlay
 			graphics.setColor(previousColor);
 			graphics.setClip(previousClip);
 		}
-	}
-
-	private Widget findTitle(Widget widget, Rectangle rootBounds, int depth)
-	{
-		if (widget == null || depth > 12)
-		{
-			return null;
-		}
-
-		String text = widget.getText();
-		if (text != null && text.contains("Equip Your Character"))
-		{
-			Rectangle titleBounds = widget.getBounds();
-			if (titleBounds != null && titleBounds.y <= rootBounds.y + rootBounds.height * 0.15)
-			{
-				return widget;
-			}
-		}
-
-		Widget found = findTitle(widget.getStaticChildren(), rootBounds, depth);
-		if (found != null)
-		{
-			return found;
-		}
-		found = findTitle(widget.getDynamicChildren(), rootBounds, depth);
-		if (found != null)
-		{
-			return found;
-		}
-		return findTitle(widget.getNestedChildren(), rootBounds, depth);
-	}
-
-	private Widget findTitle(Widget[] children, Rectangle rootBounds, int depth)
-	{
-		if (children == null)
-		{
-			return null;
-		}
-		for (int i = 0; i < children.length; i++)
-		{
-			Widget found = findTitle(children[i], rootBounds, depth + 1);
-			if (found != null)
-			{
-				return found;
-			}
-		}
-		return null;
 	}
 }
