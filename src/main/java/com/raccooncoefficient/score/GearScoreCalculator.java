@@ -212,6 +212,17 @@ public final class GearScoreCalculator
 
 		if (!before.isComplete() || !next.isComplete())
 		{
+			// Wave 1's legacy contract allows a known swap delta when
+			// unrelated unknown equipment stays in the same worn slots.
+			// The unchanged contribution cancels from the relative difference.
+			// Preserve that behavior when NO conditional extensions exist.
+			if (setBonuses.isEmpty() && weaponPassives.isEmpty()
+				&& before.isExtensionDataComplete() && next.isExtensionDataComplete())
+			{
+				return GearScoreComparison.knownItem(itemScore, round1(baseDelta));
+			}
+			// Wave 2/3 conditional effects can depend on other worn slots,
+			// so only the verified base portion is safe to present.
 			return GearScoreComparison.knownItemBaseOnlyDelta(itemScore, round1(baseDelta));
 		}
 
