@@ -68,7 +68,7 @@ public class GearScoreV2PreviewTest
 	}
 
 	@Test
-	public void strengthAndMagicAttackCoefficientsAreExactlyThreeTenthsAndFourTenths()
+	public void meleeStrengthMagicAttackAndRangedStrengthHaveSeparateWeights()
 	{
 		EquipmentBonus onlyStrength = stats(EquipmentSlot.WEAPON,0,0,0,0,0,
 			0,0,0,0,0,10,0,"0",0);
@@ -78,7 +78,21 @@ public class GearScoreV2PreviewTest
 			0,0,0,0,0,0,10,"0",0);
 		assertEquals("3.0",GearScoreV2Preview.itemDisplay(onlyStrength).toPlainString());
 		assertEquals("4.0",GearScoreV2Preview.itemDisplay(onlyMagicAttack).toPlainString());
-		assertEquals("3.0",GearScoreV2Preview.itemDisplay(onlyRangedStrength).toPlainString());
+		assertEquals("10.0",GearScoreV2Preview.itemDisplay(onlyRangedStrength).toPlainString());
+	}
+
+	@Test
+	public void preservesRangedStrengthOnHighStrengthAndAmmoTestCases()
+	{
+		EquipmentBonus bow = stats(EquipmentSlot.WEAPON,0,0,0,0,60,
+			0,0,0,0,0,0,80,"0",0);
+		EquipmentBonus ammunition = stats(EquipmentSlot.AMMO,0,0,0,0,0,
+			0,0,0,0,0,0,55,"0",0);
+		assertEquals("86.0",GearScoreV2Preview.itemDisplay(bow).toPlainString());
+		assertEquals("55.0",GearScoreV2Preview.itemDisplay(ammunition).toPlainString());
+		assertEquals("141.0",GearScoreV2Preview.verifiedBaseTotal(
+			Arrays.asList(new WornItem(EquipmentSlot.WEAPON,1),new WornItem(EquipmentSlot.AMMO,2)),
+			id -> id == 1 ? bow : id == 2 ? ammunition : null).toPlainString());
 	}
 
 	@Test
