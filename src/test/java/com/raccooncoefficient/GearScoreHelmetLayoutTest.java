@@ -64,6 +64,29 @@ public class GearScoreHelmetLayoutTest
 	}
 
 	@Test
+	public void zeroSizedRootCanUseObservedHelmetInsteadOfHidingTheTotal()
+	{
+		Rectangle helmet = new Rectangle(272, 240, 62, 62);
+		assertFalse(GearScoreHelmetLayout.isUsablePanel(
+			new Rectangle(0, 0, 0, 0), helmet));
+		Rectangle fallback = GearScoreHelmetLayout.fallbackPanel(helmet);
+		assertTrue(GearScoreHelmetLayout.isUsablePanel(fallback, helmet));
+		GearScoreHelmetLayout.Placement p =
+			GearScoreHelmetLayout.choose(fallback, helmet, 116, 72);
+		assertEquals(GearScoreHelmetLayout.Label.FULL, p.getLabel());
+		assertEquals(229, p.getBaseline());
+		assertEquals(helmet.x + helmet.width / 2,
+			p.getX() + p.getWidth() / 2);
+	}
+
+	@Test
+	public void fallbackRejectsBogusOrUnseenHelmetGeometry()
+	{
+		assertNull(GearScoreHelmetLayout.fallbackPanel(null));
+		assertNull(GearScoreHelmetLayout.fallbackPanel(new Rectangle(5, 5, 0, 0)));
+	}
+
+	@Test
 	public void neverPaintsAcrossTheVanillaTitleEvenWithAnInvalidHelmetPosition()
 	{
 		GearScoreHelmetLayout.Placement p = GearScoreHelmetLayout.choose(
