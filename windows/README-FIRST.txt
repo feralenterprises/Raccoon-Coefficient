@@ -1,4 +1,4 @@
-RACCOON COEFFICIENT | EASY WINDOWS PACKAGE (REV 2)
+RACCOON COEFFICIENT | HELMET TOTAL DISPLAY TEST BUILD
 =================================================
 
 YOUR JAVA 17 INSTALLATION IS FINE.
@@ -10,7 +10,7 @@ both could contend over C:\Users\<you>\.gradle\wrapper\dists. The "Deleting
 directory ... gradle-8.10" message is Gradle's own distribution cleanup,
 not proof of a plugin compilation problem.
 
-USE THE NEW START BUTTON INSTEAD
+USE THIS HELMET TOTAL DISPLAY BUILD
 1. Right-click this ZIP, click Extract All.
 2. Open the extracted RACCOON-COEFFICIENT-WINDOWS folder.
 3. Double-click START-RACCOON.bat.
@@ -42,6 +42,12 @@ Raccoon-Coefficient\
 If the portable launcher displays an exception, send the error text from
 its window. The portable JAR is a developer client, not the publicly supported
 RuneLite Plugin Hub build. Windows native login/UI has not been verified.
+
+SCREEN UPDATE (RC-UI-014): When you open Equip Your Character, look for
+Gear Score centered ABOVE the helmet, BELOW the orange title. Total updates
+when worn gear changes. The previous version attempted to render beside the
+title and could hide the label. The gear strength/weapon weighting is still
+the ORIGINAL v1 formula while a balanced v2 is researched.
 
 This bundle does NOT replace or integrate HoverLite, TPT, or Burrow.
 No merge or release authorized.
