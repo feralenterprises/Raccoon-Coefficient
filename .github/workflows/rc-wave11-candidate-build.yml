@@ -1,0 +1,69 @@
+name: RC Wave 11 Candidate Verification
+
+on:
+  push:
+    branches:
+      - feature/rc-wave11-release-candidate-hardening-20261104
+  pull_request:
+    branches:
+      - feature/rc-wave10-calibration-ledger-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rc-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout standalone Raccoon Coefficient
+        uses: actions/checkout@v4
+      - name: JDK 17 and Java 11 compilation target
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Refuse dependencies on other plugins
+        shell: bash
+        run: |
+          if grep -RniE '(^import |implementation |compileOnly |runtimeOnly ).*(trashpandatracker|hoverlite|gg\\.feral\\.burrow)' src/main/java build.gradle; then
+            echo "Raccoon Coefficient must remain independent"
+            exit 1
+          fi
+      - name: Clean build and execute all 11 waves of tests
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+      - name: Validate candidate JAR structure and record source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/rc-candidate-evidence
+          JAR_FILE="$(find build/libs -maxdepth 1 -type f -name '*.jar' -print -quit)"
+          test -n "$JAR_FILE"
+          printf 'HEAD_COMMIT=%s\n' "$(git rev-parse HEAD)" > build/rc-candidate-evidence/source.txt
+          printf 'JAVA_SOURCE_FILES=%s\n' "$(find src/main/java -type f -name '*.java' | wc -l)" >> build/rc-candidate-evidence/source.txt
+          printf 'COMPILED_JAR=%s\n' "$JAR_FILE" >> build/rc-candidate-evidence/source.txt
+          jar tf "$JAR_FILE" > build/rc-candidate-evidence/jar-entries.txt
+          grep -Fxq 'com/raccooncoefficient/RaccoonCoefficientPlugin.class' build/rc-candidate-evidence/jar-entries.txt
+          grep -Fxq 'com/raccooncoefficient/EquipmentScoreOverlay.class' build/rc-candidate-evidence/jar-entries.txt
+          grep -Fxq 'com/raccooncoefficient/GearScoreTooltipOverlay.class' build/rc-candidate-evidence/jar-entries.txt
+          grep -Fxq 'com/raccooncoefficient/score/GearScoreCalculator.class' build/rc-candidate-evidence/jar-entries.txt
+          grep -Fxq 'com/raccooncoefficient/score/EffectCalibrationLedger.class' build/rc-candidate-evidence/jar-entries.txt
+          javap -verbose -classpath "$JAR_FILE" com.raccooncoefficient.RaccoonCoefficientPlugin > build/rc-candidate-evidence/class-version.txt
+          grep -q 'major version: 55' build/rc-candidate-evidence/class-version.txt
+          sha256sum "$JAR_FILE" > build/rc-candidate-evidence/jar-sha256.txt
+          cat build/rc-candidate-evidence/source.txt
+          cat build/rc-candidate-evidence/jar-sha256.txt
+      - name: Save complete audit and candidate receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-wave11-candidate-and-receipts
+          path: |
+            build/libs/*.jar
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/rc-candidate-evidence/**
+          if-no-files-found: warn
