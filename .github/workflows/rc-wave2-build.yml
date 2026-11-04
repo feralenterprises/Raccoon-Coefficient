@@ -1,0 +1,41 @@
+name: Wave 2 build (isolated)
+
+on:
+  push:
+    branches:
+      - feature/rc-wave2-set-effects-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Raccoon Coefficient only
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Java 11 compilation target)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile plugin and run Java source tests (no RuneLite GUI)
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+
+      - name: Upload build/test receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-wave2-build-receipts
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/libs/**
+          if-no-files-found: warn
