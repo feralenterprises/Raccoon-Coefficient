@@ -19,7 +19,7 @@ echo [INFO] Opening RuneLite with Raccoon Coefficient...
 echo [INFO] No Gradle installation or build required for this button.
 echo [INFO] RuneLite may download its normal game resources when starting.
 echo.
-java -jar "%CLIENT%" --developer-mode --debug
+java -ea -jar "%CLIENT%" --developer-mode --debug
 set "RC_EXIT=%ERRORLEVEL%"
 if not "%RC_EXIT%"=="0" goto failed
 echo.
