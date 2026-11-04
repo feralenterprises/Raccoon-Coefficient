@@ -47,6 +47,19 @@ public final class GearScoreCalculator
 		return new GearScoreCalculator(GearScoreCoefficients.wave1());
 	}
 
+	/**
+	 * Wave 2 retains the locked base formula. An equipped unrated set effect
+	 * deliberately marks the total incomplete instead of fabricating points.
+	 */
+	public static GearScoreCalculator wave2(SetEffectDetector.ItemNameSource identities)
+	{
+		return new GearScoreCalculator(
+			GearScoreCoefficients.wave1(),
+			Collections.<SetBonus>singletonList(
+				new PendingSetEffectBonus(new SetEffectDetector(), identities)),
+			Collections.<WeaponPassive>emptyList());
+	}
+
 	public GearScoreCoefficients getCoefficients()
 	{
 		return coefficients;
