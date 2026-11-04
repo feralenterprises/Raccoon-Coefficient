@@ -1,0 +1,49 @@
+name: RC V2 Gear Score Research Preview
+
+on:
+  push:
+    branches:
+      - research/rc-v2-gear-score-weight-sim-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proposed-math:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Java 17 for Java 11 target
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Verify trial is disconnected from live UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -F 'GearScoreV2Preview' src/main/java/com/raccooncoefficient/RaccoonCoefficientPlugin.java src/main/java/com/raccooncoefficient/EquipmentTotalWidget.java src/main/java/com/raccooncoefficient/GearScoreTooltipOverlay.java src/main/java/com/raccooncoefficient/score/GearScoreCalculator.java; then
+            echo "Preview must not change the player's live score"
+            exit 1
+          fi
+          if grep -RniE '(^import |implementation |compileOnly |runtimeOnly ).*(trashpandatracker|hoverlite|gg\.feral\.burrow)' src/main/java build.gradle; then
+            echo "Cross-project dependency prohibited"
+            exit 1
+          fi
+      - name: Execute entire regression suite plus screenshot score comparisons
+        run: bash ./gradlew --no-daemon --stacktrace clean build
+      - name: Upload tests and source result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc-v2-preview-research-receipts
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/libs/raccoon-coefficient-1.0.0.jar
+          if-no-files-found: warn
