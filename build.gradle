@@ -33,6 +33,13 @@ tasks.withType(JavaCompile).configureEach {
 	options.release.set(11)
 }
 
+// Deterministic archive bytes for equivalent compiled inputs. This is a
+// candidate artifact reproducibility property, not approval to distribute.
+tasks.withType(Jar).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+
 tasks.withType(Test).configureEach {
 	// The *Test launcher starts the RuneLite client. Unit tests live beside it.
 	exclude '**/RaccoonCoefficientPluginTest.class'
