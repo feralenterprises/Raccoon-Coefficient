@@ -29,13 +29,14 @@ public class EquipmentScoreOverlay extends Overlay
 
 	private final Client client;
 	private final RuneLiteItemStatSource stats;
-	private final GearScoreCalculator calculator = GearScoreCalculator.wave1();
+	private final GearScoreCalculator calculator;
 
 	@Inject
-	EquipmentScoreOverlay(Client client, RuneLiteItemStatSource stats)
+	EquipmentScoreOverlay(Client client, RuneLiteItemStatSource stats, RuneLiteItemNameSource names)
 	{
 		this.client = client;
 		this.stats = stats;
+		this.calculator = GearScoreCalculator.wave2(names);
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.MANUAL);
 		drawAfterInterface(InterfaceID.EQUIPMENT);
@@ -56,7 +57,13 @@ public class EquipmentScoreOverlay extends Overlay
 			return null;
 		}
 
-		GearScoreBreakdown score = calculator.score(WornEquipment.read(client), stats);
+		java.util.List<com.raccooncoefficient.score.WornItem> worn = WornEquipment.read(client);
+		if (worn == null)
+		{
+			drawLine(graphics, bounds, root, "Gear Score: ?");
+			return null;
+		}
+		GearScoreBreakdown score = calculator.score(worn, stats);
 		drawLine(graphics, bounds, root, GearScoreText.equipmentLine(score));
 		return null;
 	}
