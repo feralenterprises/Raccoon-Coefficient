@@ -1,44 +1,49 @@
 @echo off
 setlocal EnableExtensions
-title Raccoon Coefficient - Clean Build And Start
+title Raccoon Coefficient - Clean Rebuild And Start
 echo.
 echo =====================================================
-echo   RACCOON COEFFICIENT  ^|  CLEAN BUILD + RUNELITE
+echo    RACCOON COEFFICIENT ^| CLEAN BUILD + RUNELITE
 echo =====================================================
 echo.
 set "PROJECT=%~dp0Raccoon-Coefficient"
+set "CLIENT=%PROJECT%\build\libs\raccoon-coefficient-1.0.0-all.jar"
 if not exist "%PROJECT%\gradlew.bat" goto missing
 where java >nul 2>&1
 if errorlevel 1 goto nojava
 if defined JAVA_HOME if not exist "%JAVA_HOME%\bin\java.exe" goto badhome
+rem Use a Raccoon-only Gradle cache so other projects cannot interfere.
+set "GRADLE_USER_HOME=%PROJECT%\.gradle-rc-cache"
 cd /d "%PROJECT%" || goto missing
-echo [1/2] Compiling the whole standalone plugin and running all unit tests...
-call ".\gradlew.bat" --no-daemon clean build
+echo [1/2] Clean compile, test and prepare portable developer client...
+echo [INFO] This build uses an isolated Raccoon Gradle cache.
+echo [INFO] The first rebuild requires internet for Gradle dependencies.
+call ".\gradlew.bat" --no-daemon --console=plain clean build shadowJar
 if errorlevel 1 goto failed
+if not exist "%CLIENT%" goto failed
 echo.
-echo [OK] Clean build passed. Compiled JAR:
-echo %PROJECT%\build\libs\raccoon-coefficient-1.0.0.jar
+echo [2/2] Launching the newly rebuilt portable RuneLite client...
+java -jar "%CLIENT%" --developer-mode --debug
+if errorlevel 1 goto launchfailed
 echo.
-echo [2/2] Opening separate RuneLite developer client...
-call ".\gradlew.bat" --no-daemon run
-if errorlevel 1 goto failed
-echo.
-echo [OK] RuneLite client closed normally.
+echo [OK] RuneLite closed normally.
 pause
 exit /b 0
 :missing
-echo [ERROR] Missing Raccoon-Coefficient\gradlew.bat.
-echo Extract the ENTIRE ZIP before double clicking.
+echo [ERROR] Missing build files. Extract the entire ZIP first.
 goto stop
 :nojava
-echo [ERROR] Install Temurin JDK 17 and try again:
+echo [ERROR] Java 17 missing. Download Temurin 17:
 echo https://adoptium.net/temurin/releases/?version=17
 goto stop
 :badhome
-echo [ERROR] Invalid JAVA_HOME: %JAVA_HOME%
+echo [ERROR] JAVA_HOME is invalid: %JAVA_HOME%
 goto stop
 :failed
-echo [ERROR] Build or launcher failed. Read error output above.
+echo [ERROR] Clean build failed. Copy the error lines above for diagnosis.
+goto stop
+:launchfailed
+echo [ERROR] Portable RuneLite client failed. Copy the error above.
 :stop
 pause
 exit /b 1
