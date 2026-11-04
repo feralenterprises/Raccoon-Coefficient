@@ -13,13 +13,12 @@ import java.awt.Rectangle;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
 import net.runelite.client.ui.overlay.components.TooltipComponent;
-import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 
 /**
@@ -50,6 +49,9 @@ public class GearScoreTooltipOverlay extends Overlay
 		this.runeLiteConfig = runeLiteConfig;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
+		// Share RuneLite's full-screen tooltip draw hook (also used by HoverLite
+		// and RuneLite's TooltipOverlay); no external plugin dependency.
+		drawAfterInterface(InterfaceID.TOPLEVEL_DISPLAY);
 	}
 
 	@Override
@@ -70,7 +72,8 @@ public class GearScoreTooltipOverlay extends Overlay
 		String text = GearScoreText.tooltip(comparison, WornEquipment.contains(worn, itemId));
 		if (text != null)
 		{
-			tooltipManager.add(new Tooltip(new ReadableTooltip(text, runeLiteConfig.overlayBackgroundColor())));
+			ScoreTooltipQueue.addOnce(tooltipManager,
+				new ReadableTooltip(text, runeLiteConfig.overlayBackgroundColor()));
 		}
 		return null;
 	}
@@ -88,7 +91,7 @@ public class GearScoreTooltipOverlay extends Overlay
 	 * RuneLite's default tooltip font has no arrows or unicode minus. Fall
 	 * back to a font that can draw them for this tooltip only.
 	 */
-	private static final class ReadableTooltip implements LayoutableRenderableEntity
+	private static final class ReadableTooltip implements ScoreTooltipQueue.ScoreComponent
 	{
 		private final TooltipComponent component = new TooltipComponent();
 
