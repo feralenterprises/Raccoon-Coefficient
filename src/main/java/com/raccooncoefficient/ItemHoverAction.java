@@ -20,7 +20,8 @@ final class ItemHoverAction
 
 	static boolean isItemAction(MenuEntry entry)
 	{
-		if (entry == null || entry.getType() == null)
+		if (entry == null || entry.getType() == null
+			|| entry.getOption() == null || entry.getOption().trim().isEmpty())
 		{
 			return false;
 		}
