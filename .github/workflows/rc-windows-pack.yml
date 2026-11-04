@@ -70,7 +70,7 @@ jobs:
           timeout 12s java -ea -Djava.awt.headless=true -jar build/libs/raccoon-coefficient-1.0.0-all.jar --developer-mode --debug > /tmp/rc-boot-smoke.log 2>&1
           BOOT_EXIT=$?
           set -e
-          if ! grep -q 'RuneLite .*starting up' /tmp/rc-boot-smoke.log; then
+          if ! grep -Fq 'starting up, args:' /tmp/rc-boot-smoke.log; then
             tail -100 /tmp/rc-boot-smoke.log
             echo "Portable entrypoint did not reach RuneLite bootstrap"
             exit 1
