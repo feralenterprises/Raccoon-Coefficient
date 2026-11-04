@@ -25,9 +25,11 @@ This is stat arithmetic, not proof that either combat role is actually better in
 | Ranged Attack | 0.10 | 0.10 |
 | All Defence bonuses | 0.10 | 0.08 |
 | Melee Strength | 1.00 | 0.30 |
-| Ranged Strength | 1.00 | 0.30 |
+| Ranged Strength | 1.00 | **1.00 (unchanged)** |
 | Magic Damage percentage point | 1.00 | 2.00 |
 | Prayer | 0.50 | 0.50 |
+
+Owner calibration correction: **do not apply the Melee Strength nerf to Ranged Strength.** Ranged Strength remains at its original 1.00 weight until we test actual bows, crossbows and ammunition, avoiding a sweeping ranged nerf based solely on melee examples. A possible 0.90 trial would require ranged evidence. The preview includes separate bow +80 and ammunition +55 Ranged Strength regression cases.
 
 Signed negatives remain negative; Magic Attack -30 now subtracts 12 rather than 3, as important as the boost to +30. No unsupported boss multipliers, no hidden cap, and no invented combat DPS equivalences.
 
@@ -50,7 +52,7 @@ Investigate actual worn ID-to-name mappings, full set pieces and the detector's 
 ## Scope / FERAL-VERIFY-001
 
 TICKET: RC-MATH-017
-STATUS: CODED, NOT LIVE, NOT NATIVE VERIFIED, not owner accepted.
+STATUS: CODED, NOT LIVE, NOT NATIVE VERIFIED, not owner accepted. Owner feedback incorporated: preserve Ranged Strength at 1.00.
 WHAT CHANGED: Experimental score model and exact screenshot-based tests, not production formula or UI.
 FILES: score/GearScoreV2Preview.java, score/GearScoreV2PreviewTest.java, docs/RC-MATH-017-V2-WEIGHT-PREVIEW.md and separate CI.
 WHAT PLAYER CAN NOW DO: No changed visible behavior. Compare candidate v1 versus v2 source test outputs.
