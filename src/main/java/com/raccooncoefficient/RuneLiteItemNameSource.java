@@ -20,6 +20,6 @@ public final class RuneLiteItemNameSource implements SetEffectDetector.ItemNameS
 	public String nameOf(int itemId)
 	{
 		ItemComposition item = itemManager.getItemComposition(itemId);
-		return item == null ? null : item.getName();
+		return item == null ? null : item.getMembersName();
 	}
 }
