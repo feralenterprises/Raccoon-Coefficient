@@ -35,7 +35,7 @@ jobs:
             exit 1
           fi
       - name: Clean compile and test standalone plugin
-        run: bash ./gradlew --no-daemon --stacktrace clean build
+        run: bash ./gradlew --no-daemon --stacktrace clean build shadowJar
       - name: Verify same precompiled artifact as audited Wave 11
         shell: bash
         run: |
@@ -47,6 +47,17 @@ jobs:
           echo "Precompiled Raccoon JAR SHA256=$ACTUAL"
           test "$EXPECTED" = "$ACTUAL"
           jar tf "$JAR" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPlugin.class'
+      - name: Verify compiled portable developer launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORTABLE="build/libs/raccoon-coefficient-1.0.0-all.jar"
+          test -s "$PORTABLE"
+          unzip -p "$PORTABLE" META-INF/MANIFEST.MF | grep -F 'Main-Class: com.raccooncoefficient.RaccoonCoefficientPluginTest'
+          jar tf "$PORTABLE" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPluginTest.class'
+          jar tf "$PORTABLE" | grep -Fx 'net/runelite/client/RuneLite.class'
+          jar tf "$PORTABLE" | grep -Fx 'com/raccooncoefficient/RaccoonCoefficientPlugin.class'
+          sha256sum "$PORTABLE"
       - name: Assemble fully self-contained source and binary Windows ZIP
         shell: bash
         run: |
@@ -75,10 +86,18 @@ jobs:
           local=target/'build'/'libs'/'raccoon-coefficient-1.0.0.jar'
           local.parent.mkdir(parents=True)
           shutil.copy2(jar,local)
+          portable=root/'build'/'libs'/'raccoon-coefficient-1.0.0-all.jar'
+          portable_copy=pkg/'PORTABLE-CLIENT'/portable.name
+          portable_copy.parent.mkdir(parents=True)
+          shutil.copy2(portable,portable_copy)
+          local_portable=target/'build'/'libs'/portable.name
+          shutil.copy2(portable,local_portable)
           sha=hashlib.sha256(jar.read_bytes()).hexdigest()
+          portable_sha=hashlib.sha256(portable.read_bytes()).hexdigest()
           (pkg/'VERIFIED-BUILD-SHA256.txt').write_text(
               'Source Wave 11: a72774d9a0c428e431500655fb381d3de6b4b226\n'
               'Wave 11 and package JAR SHA256: '+sha+'\n'
+              'Portable RuneLite developer client JAR SHA256: '+portable_sha+'\n'
               'Build: Java 17, Java 11 target, Gradle 8.10, RuneLite 1.13.6\n'
               'Native Windows launch: NOT VERIFIED\n'
               'Hub submission: NOT AUTHORIZED\n',encoding='utf-8'
@@ -102,6 +121,7 @@ jobs:
                   'RACCOON-COEFFICIENT-WINDOWS/Raccoon-Coefficient/gradlew.bat',
                   'RACCOON-COEFFICIENT-WINDOWS/Raccoon-Coefficient/gradle/wrapper/gradle-wrapper.jar',
                   'RACCOON-COEFFICIENT-WINDOWS/BUILT-JAR/raccoon-coefficient-1.0.0.jar',
+                  'RACCOON-COEFFICIENT-WINDOWS/PORTABLE-CLIENT/raccoon-coefficient-1.0.0-all.jar',
               ):
                   assert required in names,required
           print('WINDOWS_ZIP=',z)
