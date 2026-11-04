@@ -23,7 +23,7 @@ if errorlevel 1 goto failed
 if not exist "%CLIENT%" goto failed
 echo.
 echo [2/2] Launching the newly rebuilt portable RuneLite client...
-java -jar "%CLIENT%" --developer-mode --debug
+java -ea -jar "%CLIENT%" --developer-mode --debug
 if errorlevel 1 goto launchfailed
 echo.
 echo [OK] RuneLite closed normally.
