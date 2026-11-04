@@ -3,6 +3,7 @@ package com.raccooncoefficient;
 import com.raccooncoefficient.score.GearScoreCalculator;
 import com.raccooncoefficient.score.GearScoreComparison;
 import com.raccooncoefficient.score.GearScoreText;
+import com.raccooncoefficient.score.ItemStatSource;
 import com.raccooncoefficient.score.WornItem;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -13,13 +14,12 @@ import java.awt.Rectangle;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
 import net.runelite.client.ui.overlay.components.TooltipComponent;
-import net.runelite.client.ui.overlay.tooltip.Tooltip;
 import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 
 /**
@@ -30,7 +30,7 @@ import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 public class GearScoreTooltipOverlay extends Overlay
 {
 	private final Client client;
-	private final RuneLiteItemStatSource stats;
+	private final ItemStatSource stats;
 	private final TooltipManager tooltipManager;
 	private final RuneLiteConfig runeLiteConfig;
 	private final GearScoreCalculator calculator;
@@ -43,13 +43,27 @@ public class GearScoreTooltipOverlay extends Overlay
 		TooltipManager tooltipManager,
 		RuneLiteConfig runeLiteConfig)
 	{
+		this(client, stats, GearScoreCalculator.wave3(names), tooltipManager, runeLiteConfig);
+	}
+
+	/** Testable rendering seam; production still uses the injected RuneLite adapters. */
+	GearScoreTooltipOverlay(
+		Client client,
+		ItemStatSource stats,
+		GearScoreCalculator calculator,
+		TooltipManager tooltipManager,
+		RuneLiteConfig runeLiteConfig)
+	{
 		this.client = client;
 		this.stats = stats;
-		this.calculator = GearScoreCalculator.wave3(names);
+		this.calculator = calculator;
 		this.tooltipManager = tooltipManager;
 		this.runeLiteConfig = runeLiteConfig;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
+		// Share RuneLite's full-screen tooltip draw hook (also used by HoverLite
+		// and RuneLite's TooltipOverlay); no external plugin dependency.
+		drawAfterInterface(InterfaceID.TOPLEVEL_DISPLAY);
 	}
 
 	@Override
@@ -70,7 +84,8 @@ public class GearScoreTooltipOverlay extends Overlay
 		String text = GearScoreText.tooltip(comparison, WornEquipment.contains(worn, itemId));
 		if (text != null)
 		{
-			tooltipManager.add(new Tooltip(new ReadableTooltip(text, runeLiteConfig.overlayBackgroundColor())));
+			ScoreTooltipQueue.addOnce(tooltipManager,
+				new ReadableTooltip(text, runeLiteConfig.overlayBackgroundColor()));
 		}
 		return null;
 	}
@@ -88,7 +103,7 @@ public class GearScoreTooltipOverlay extends Overlay
 	 * RuneLite's default tooltip font has no arrows or unicode minus. Fall
 	 * back to a font that can draw them for this tooltip only.
 	 */
-	private static final class ReadableTooltip implements LayoutableRenderableEntity
+	private static final class ReadableTooltip implements ScoreTooltipQueue.ScoreComponent
 	{
 		private final TooltipComponent component = new TooltipComponent();
 
