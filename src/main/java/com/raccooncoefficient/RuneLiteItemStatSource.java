@@ -57,6 +57,9 @@ public final class RuneLiteItemStatSource implements ItemStatSource
 			equipment.getStr(),
 			equipment.getRstr(),
 			new BigDecimal(Float.toString(equipment.getMdmg())),
-			equipment.getPrayer());
+			equipment.getPrayer(),
+			// RuneLite 1.13.6 ItemEquipmentStats.aspeed (ticks). Read only by the
+			// experimental model; 0/absent stays "unknown speed".
+			equipment.getAspeed());
 	}
 }

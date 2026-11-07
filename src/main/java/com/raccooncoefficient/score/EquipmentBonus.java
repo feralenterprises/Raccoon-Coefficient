@@ -24,6 +24,8 @@ public final class EquipmentBonus
 	private final int rangedStrength;
 	private final BigDecimal magicDamagePercent;
 	private final int prayer;
+	/** Listed attack speed in game ticks; 0 means not known (never a real speed). */
+	private final int attackSpeed;
 
 	public EquipmentBonus(
 		int slot,
@@ -42,6 +44,34 @@ public final class EquipmentBonus
 		int rangedStrength,
 		BigDecimal magicDamagePercent,
 		int prayer)
+	{
+		this(slot, twoHanded, attackStab, attackSlash, attackCrush, attackMagic, attackRanged,
+			defenceStab, defenceSlash, defenceCrush, defenceMagic, defenceRanged,
+			meleeStrength, rangedStrength, magicDamagePercent, prayer, 0);
+	}
+
+	/**
+	 * @param attackSpeed listed weapon speed in ticks, or 0 when unknown. It is
+	 *        NOT part of the locked v1 formula; only the experimental model reads it.
+	 */
+	public EquipmentBonus(
+		int slot,
+		boolean twoHanded,
+		int attackStab,
+		int attackSlash,
+		int attackCrush,
+		int attackMagic,
+		int attackRanged,
+		int defenceStab,
+		int defenceSlash,
+		int defenceCrush,
+		int defenceMagic,
+		int defenceRanged,
+		int meleeStrength,
+		int rangedStrength,
+		BigDecimal magicDamagePercent,
+		int prayer,
+		int attackSpeed)
 	{
 		if (magicDamagePercent == null)
 		{
@@ -63,6 +93,7 @@ public final class EquipmentBonus
 		this.rangedStrength = rangedStrength;
 		this.magicDamagePercent = magicDamagePercent;
 		this.prayer = prayer;
+		this.attackSpeed = Math.max(0, attackSpeed);
 	}
 
 	public int getSlot()
@@ -143,5 +174,11 @@ public final class EquipmentBonus
 	public int getPrayer()
 	{
 		return prayer;
+	}
+
+	/** Listed speed in ticks, or 0 when unknown. */
+	public int getAttackSpeed()
+	{
+		return attackSpeed;
 	}
 }

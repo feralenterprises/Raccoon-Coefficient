@@ -12,6 +12,7 @@ public final class GearScoreBreakdown
 	private final boolean itemDataComplete;
 	private final boolean extensionDataComplete;
 	private final int unknownItems;
+	private final String modelLabel;
 
 	public GearScoreBreakdown(
 		BigDecimal baseEquipment,
@@ -21,6 +22,19 @@ public final class GearScoreBreakdown
 		boolean extensionDataComplete,
 		int unknownItems)
 	{
+		this(baseEquipment, setBonus, weaponPassive, itemDataComplete, extensionDataComplete, unknownItems, null);
+	}
+
+	public GearScoreBreakdown(
+		BigDecimal baseEquipment,
+		BigDecimal setBonus,
+		BigDecimal weaponPassive,
+		boolean itemDataComplete,
+		boolean extensionDataComplete,
+		int unknownItems,
+		String modelLabel)
+	{
+		this.modelLabel = modelLabel;
 		this.baseEquipment = baseEquipment;
 		this.setBonus = setBonus;
 		this.weaponPassive = weaponPassive;
@@ -72,5 +86,11 @@ public final class GearScoreBreakdown
 	public BigDecimal displayedTotal()
 	{
 		return totalUnrounded().setScale(1, RoundingMode.HALF_UP);
+	}
+
+	/** Null for the locked v1 contract; e.g. "E1" for the experimental layer. */
+	public String getModelLabel()
+	{
+		return modelLabel;
 	}
 }

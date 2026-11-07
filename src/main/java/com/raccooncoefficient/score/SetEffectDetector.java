@@ -84,6 +84,7 @@ public final class SetEffectDetector
 	private static final int LEGS = 7;
 	private static final int GLOVES = 9;
 	private static final int WEAPON = EquipmentSlot.WEAPON;
+	private static final int NECK = EquipmentSlot.NECK;
 
 	private static Required r(int slot, String... names) { return new Required(slot, names); }
 	private static Rule rule(String key, String url, String description, Required... required)
@@ -94,6 +95,7 @@ public final class SetEffectDetector
 	private static final String VOID = "https://oldschool.runescape.wiki/w/Void_Knight_equipment";
 	private static final String OBSIDIAN = "https://oldschool.runescape.wiki/w/Obsidian_armour";
 	private static final String BARROWS = "https://oldschool.runescape.wiki/w/Barrows_armour";
+	private static final String DAMNED = "https://oldschool.runescape.wiki/w/Amulet_of_the_damned";
 	private static final String JUSTICIAR = "https://oldschool.runescape.wiki/w/Justiciar_armour";
 	private static final String INQUISITOR = "https://oldschool.runescape.wiki/w/Inquisitor%27s_armour";
 	private static final String CRYSTAL = "https://oldschool.runescape.wiki/w/Crystal_armour";
@@ -140,6 +142,22 @@ public final class SetEffectDetector
 		rules.add(barrows("karil", "karil's coif", "karil's leathertop", "karil's leatherskirt", "karil's crossbow"));
 		rules.add(barrows("torag", "torag's helm", "torag's platebody", "torag's platelegs", "torag's hammers"));
 		rules.add(barrows("verac", "verac's helm", "verac's brassard", "verac's plateskirt", "verac's flail"));
+
+		// Ported from RACCOON-CRYSTAL-WAVE (plus Ahrim): amulet of the damned
+		// enhanced effects, w/Amulet_of_the_damned (checked 2026-11-07).
+		Required amulet = r(NECK, "amulet of the damned", "amulet of the damned (full)");
+		rules.add(rule("barrows.ahrim.damned", DAMNED, "25% chance of +30% damage when autocasting combat spells",
+			r(HEAD, "ahrim's hood"), r(BODY, "ahrim's robetop"),
+			r(LEGS, "ahrim's robeskirt"), r(WEAPON, "ahrim's staff"), amulet));
+		rules.add(rule("barrows.karil.damned", DAMNED, "25% chance of a half-damage follow-up",
+			r(HEAD, "karil's coif"), r(BODY, "karil's leathertop"),
+			r(LEGS, "karil's leatherskirt"), r(WEAPON, "karil's crossbow"), amulet));
+		rules.add(rule("barrows.dharok.damned", DAMNED, "25% chance to reflect 15% of incoming damage",
+			r(HEAD, "dharok's helm"), r(BODY, "dharok's platebody"),
+			r(LEGS, "dharok's platelegs"), r(WEAPON, "dharok's greataxe"), amulet));
+		rules.add(rule("barrows.verac.damned", DAMNED, "+7 additional prayer bonus",
+			r(HEAD, "verac's helm"), r(BODY, "verac's brassard"),
+			r(LEGS, "verac's plateskirt"), r(WEAPON, "verac's flail"), amulet));
 
 		rules.add(rule("justiciar", JUSTICIAR, "Incoming damage reduction uses the relevant defence bonus / 3000 outside PvP and typeless damage",
 			r(HEAD, "justiciar faceguard"), r(BODY, "justiciar chestguard"), r(LEGS, "justiciar legguards")));
@@ -222,8 +240,9 @@ public final class SetEffectDetector
 
 	/**
 	 * Name normalization is limited to cosmetic/equipment-family identity.
-	 * A trailing Barrows numeric stage or ornament suffix is ignored; no charge,
-	 * durability, or broken-state monitoring is performed.
+	 * A trailing usable Barrows stage (100/75/50/25) or ornament suffix is
+	 * ignored. Fully degraded " 0" stays distinct and cannot activate a set
+	 * (ported from RACCOON-CRYSTAL-WAVE). No charge monitoring is performed.
 	 */
 	private static String canonical(String name)
 	{
@@ -232,13 +251,42 @@ public final class SetEffectDetector
 			return null;
 		}
 		String canonical = name.toLowerCase(Locale.ROOT).trim();
+		// Locked Void equipment retains the same set identity. Limit this to
+		// known Void names rather than stripping (l) from unrelated equipment.
+		if (canonical.endsWith(" (l)"))
+		{
+			String base = canonical.substring(0, canonical.length() - 4);
+			if (base.equals("void knight gloves") || base.equals("void knight top")
+				|| base.equals("void knight robe") || base.equals("elite void top")
+				|| base.equals("elite void robe") || base.equals("void melee helm")
+				|| base.equals("void ranger helm") || base.equals("void mage helm"))
+			{
+				canonical = base;
+			}
+		}
+		// Ported from RACCOON-CRYSTAL-WAVE: only the eight elven-clan recolours
+		// of the supported crystal pieces/bow are normalized. Inactive,
+		// PvP/minigame and unrecognized variants stay distinct.
+		for (String clan : new String[]{"amlodd", "cadarn", "crwys", "hefin", "iorwerth", "ithell", "meilyr", "trahaearn"})
+		{
+			String suffix = " (" + clan + ")";
+			if (canonical.endsWith(suffix))
+			{
+				String base = canonical.substring(0, canonical.length() - suffix.length());
+				if (base.equals("crystal helm") || base.equals("crystal body") || base.equals("crystal legs")
+					|| base.equals("bow of faerdhinen (c)"))
+				{
+					canonical = base;
+				}
+				break;
+			}
+		}
 		if (canonical.endsWith(" (or)"))
 		{
 			canonical = canonical.substring(0, canonical.length() - 5);
 		}
 		if (canonical.endsWith(" 100") || canonical.endsWith(" 75")
-			|| canonical.endsWith(" 50") || canonical.endsWith(" 25")
-			|| canonical.endsWith(" 0"))
+			|| canonical.endsWith(" 50") || canonical.endsWith(" 25"))
 		{
 			canonical = canonical.substring(0, canonical.lastIndexOf(' '));
 		}

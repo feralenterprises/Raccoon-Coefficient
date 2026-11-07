@@ -19,11 +19,13 @@ public final class GearScoreText
 	public static String equipmentLine(GearScoreBreakdown score)
 	{
 		String number = score.displayedTotal().toPlainString();
+		String prefix = score.getModelLabel() == null
+			? "Gear Score: " : "Gear Score " + score.getModelLabel() + ": ";
 		if (!score.isComplete())
 		{
-			return "Gear Score: " + number + " ?";
+			return prefix + number + " ?";
 		}
-		return "Gear Score: " + number;
+		return prefix + number;
 	}
 
 	/** Short fallback used only when the full Equipment Stats header cannot fit. */
@@ -33,9 +35,15 @@ public final class GearScoreText
 		{
 			return "GS: ?";
 		}
-		return fullLine.startsWith("Gear Score: ")
-			? "GS: " + fullLine.substring("Gear Score: ".length())
-			: fullLine;
+		if (fullLine.startsWith("Gear Score: "))
+		{
+			return "GS: " + fullLine.substring("Gear Score: ".length());
+		}
+		if (fullLine.startsWith("Gear Score "))
+		{
+			return "GS " + fullLine.substring("Gear Score ".length());
+		}
+		return fullLine;
 	}
 
 	/**
@@ -56,6 +64,10 @@ public final class GearScoreText
 		StringBuilder text = new StringBuilder();
 		text.append("Gear Score: ").append(comparison.getItemScore().toPlainString());
 		text.append("</br>");
+		if (comparison.getModelLabel() != null)
+		{
+			text.append(color(NEUTRAL, comparison.getModelLabel() + " "));
+		}
 		switch (comparison.getVerdict())
 		{
 			case BETTER:

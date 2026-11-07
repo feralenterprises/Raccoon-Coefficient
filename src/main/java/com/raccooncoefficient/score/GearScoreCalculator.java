@@ -19,11 +19,13 @@ import java.util.Set;
  * the caller and contribute nothing. An item id with no verified bonus is
  * skipped and marks the total incomplete.
  */
-public final class GearScoreCalculator
+public final class GearScoreCalculator implements GearScorer
 {
 	private final GearScoreCoefficients coefficients;
 	private final List<SetBonus> setBonuses;
 	private final List<WeaponPassive> weaponPassives;
+	/** Null for the locked contract; "E1" for the experimental layer. */
+	private final String modelLabel;
 
 	public GearScoreCalculator(GearScoreCoefficients coefficients)
 	{
@@ -35,6 +37,15 @@ public final class GearScoreCalculator
 		List<SetBonus> setBonuses,
 		List<WeaponPassive> weaponPassives)
 	{
+		this(coefficients, setBonuses, weaponPassives, null);
+	}
+
+	private GearScoreCalculator(
+		GearScoreCoefficients coefficients,
+		List<SetBonus> setBonuses,
+		List<WeaponPassive> weaponPassives,
+		String modelLabel)
+	{
 		if (coefficients == null)
 		{
 			throw new IllegalArgumentException("coefficients are required");
@@ -42,6 +53,7 @@ public final class GearScoreCalculator
 		this.coefficients = coefficients;
 		this.setBonuses = copy(setBonuses);
 		this.weaponPassives = copy(weaponPassives);
+		this.modelLabel = modelLabel;
 	}
 
 	public static GearScoreCalculator wave1()
@@ -77,11 +89,37 @@ public final class GearScoreCalculator
 				new PendingWeaponPassiveBonus(new WeaponPassiveDetector(), identities)));
 	}
 
+	/**
+	 * EXPERIMENTAL E1 (proposed, not approved). Locked v1 base formula plus
+	 * explained {@link ExperimentalE1} adjustments. Every breakdown and
+	 * comparison it produces carries the "E1" label.
+	 */
+	public static GearScoreCalculator experimentalE1(SetEffectDetector.ItemNameSource identities)
+	{
+		if (identities == null)
+		{
+			throw new IllegalArgumentException("identities are required");
+		}
+		GearScoreCoefficients base = GearScoreCoefficients.wave1();
+		ExperimentalE1 model = new ExperimentalE1(base);
+		return new GearScoreCalculator(base,
+			Collections.<SetBonus>singletonList(new ExperimentalE1Contributors.Sets(model, identities)),
+			Collections.<WeaponPassive>singletonList(new ExperimentalE1Contributors.Weapon(model, identities)),
+			ExperimentalE1.LABEL);
+	}
+
+	/** Null for the locked contract, otherwise the label shown to the player. */
+	public String getModelLabel()
+	{
+		return modelLabel;
+	}
+
 	public GearScoreCoefficients getCoefficients()
 	{
 		return coefficients;
 	}
 
+	@Override
 	public GearScoreBreakdown score(List<WornItem> worn, ItemStatSource source)
 	{
 		List<WornItem> items = worn == null ? Collections.<WornItem>emptyList() : worn;
@@ -138,7 +176,7 @@ public final class GearScoreCalculator
 		// A null worn list means UNAVAILABLE, not an empty fully observed kit.
 		// Keep the legacy 0.0 subtotal, but never certify it as complete.
 		return new GearScoreBreakdown(base, set, passive,
-			worn != null && !duplicateSlots && unknownItems == 0, extensionsKnown, unknownItems);
+			worn != null && !duplicateSlots && unknownItems == 0, extensionsKnown, unknownItems, modelLabel);
 	}
 
 	public BigDecimal scoreBonus(EquipmentBonus bonus)
@@ -160,7 +198,13 @@ public final class GearScoreCalculator
 		return attack.add(defence).add(melee).add(ranged).add(magic).add(prayer);
 	}
 
+	@Override
 	public GearScoreComparison compare(int candidateItemId, List<WornItem> worn, ItemStatSource source)
+	{
+		return compareUnlabelled(candidateItemId, worn, source).withModelLabel(modelLabel);
+	}
+
+	private GearScoreComparison compareUnlabelled(int candidateItemId, List<WornItem> worn, ItemStatSource source)
 	{
 		if (source == null)
 		{

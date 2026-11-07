@@ -21,6 +21,7 @@ public final class GearScoreComparison
 	private final BigDecimal delta;
 	private final BigDecimal baseDelta;
 	private final Verdict verdict;
+	private final String modelLabel;
 
 	private GearScoreComparison(
 		boolean itemKnown,
@@ -29,6 +30,18 @@ public final class GearScoreComparison
 		BigDecimal baseDelta,
 		Verdict verdict)
 	{
+		this(itemKnown, itemScore, delta, baseDelta, verdict, null);
+	}
+
+	private GearScoreComparison(
+		boolean itemKnown,
+		BigDecimal itemScore,
+		BigDecimal delta,
+		BigDecimal baseDelta,
+		Verdict verdict,
+		String modelLabel)
+	{
+		this.modelLabel = modelLabel;
 		this.itemKnown = itemKnown;
 		this.itemScore = itemScore;
 		this.delta = delta;
@@ -103,5 +116,20 @@ public final class GearScoreComparison
 	public Verdict getVerdict()
 	{
 		return verdict;
+	}
+
+	/** Same comparison tagged with the model that produced it (null = locked v1). */
+	public GearScoreComparison withModelLabel(String label)
+	{
+		if (label == null ? modelLabel == null : label.equals(modelLabel))
+		{
+			return this;
+		}
+		return new GearScoreComparison(itemKnown, itemScore, delta, baseDelta, verdict, label);
+	}
+
+	public String getModelLabel()
+	{
+		return modelLabel;
 	}
 }

@@ -62,6 +62,15 @@ public class SetEffectDetectorTest
 	}
 
 	@Test
+	public void lockedVoidPiecesCompleteTheSameSet()
+	{
+		Gear locked = new Gear().wear(HEAD, "Void ranger helm (l)").wear(BODY, "Elite void top (l)")
+			.wear(LEGS, "Elite void robe (l)").wear(GLOVES, "Void knight gloves (l)");
+		assertEquals(SetEffectDetector.State.ACTIVE, status(locked, "void.ranged"));
+		assertEquals(SetEffectDetector.State.ACTIVE, status(locked, "void.elite.ranged"));
+	}
+
+	@Test
 	public void eliteRequiresBothElitePiecesAndCorrectHelm()
 	{
 		Gear elite = new Gear().wear(HEAD, "Void ranger helm").wear(BODY, "Elite void top")

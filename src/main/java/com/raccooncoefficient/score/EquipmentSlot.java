@@ -7,6 +7,7 @@ package com.raccooncoefficient.score;
 public final class EquipmentSlot
 {
 	public static final int HEAD = 0;
+	public static final int NECK = 2;
 	public static final int WEAPON = 3;
 	public static final int BODY = 4;
 	public static final int SHIELD = 5;

@@ -1,7 +1,8 @@
 package com.raccooncoefficient;
 
 import com.raccooncoefficient.score.GearScoreBreakdown;
-import com.raccooncoefficient.score.GearScoreCalculator;
+import com.raccooncoefficient.score.GearScorer;
+import com.raccooncoefficient.score.SelectableGearScorer;
 import com.raccooncoefficient.score.GearScoreText;
 import com.raccooncoefficient.score.ItemStatSource;
 import java.awt.Rectangle;
@@ -40,19 +41,20 @@ final class EquipmentTotalWidget
 
 	private final Client client;
 	private final ItemStatSource stats;
-	private final GearScoreCalculator calculator;
+	private final GearScorer calculator;
 	private Widget label;
 	private Widget parent;
 	private String lastStatus;
 
 	@Inject
-	EquipmentTotalWidget(Client client, RuneLiteItemStatSource stats, RuneLiteItemNameSource names)
+	EquipmentTotalWidget(Client client, RuneLiteItemStatSource stats, RuneLiteItemNameSource names,
+		RaccoonCoefficientConfig config)
 	{
-		this(client, stats, GearScoreCalculator.wave3(names));
+		this(client, stats, new SelectableGearScorer(config::scoringModel, names));
 	}
 
 	/** Test seam; normal construction uses the RuneLite item data sources. */
-	EquipmentTotalWidget(Client client, ItemStatSource stats, GearScoreCalculator calculator)
+	EquipmentTotalWidget(Client client, ItemStatSource stats, GearScorer calculator)
 	{
 		this.client = client;
 		this.stats = stats;

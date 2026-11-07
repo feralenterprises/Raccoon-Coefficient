@@ -1,6 +1,7 @@
 package com.raccooncoefficient;
 
-import com.raccooncoefficient.score.GearScoreCalculator;
+import com.raccooncoefficient.score.GearScorer;
+import com.raccooncoefficient.score.SelectableGearScorer;
 import com.raccooncoefficient.score.GearScoreComparison;
 import com.raccooncoefficient.score.GearScoreText;
 import com.raccooncoefficient.score.ItemStatSource;
@@ -33,7 +34,7 @@ public class GearScoreTooltipOverlay extends Overlay
 	private final ItemStatSource stats;
 	private final TooltipManager tooltipManager;
 	private final RuneLiteConfig runeLiteConfig;
-	private final GearScoreCalculator calculator;
+	private final GearScorer calculator;
 
 	@Inject
 	GearScoreTooltipOverlay(
@@ -41,16 +42,17 @@ public class GearScoreTooltipOverlay extends Overlay
 		RuneLiteItemStatSource stats,
 		RuneLiteItemNameSource names,
 		TooltipManager tooltipManager,
-		RuneLiteConfig runeLiteConfig)
+		RuneLiteConfig runeLiteConfig,
+		RaccoonCoefficientConfig config)
 	{
-		this(client, stats, GearScoreCalculator.wave3(names), tooltipManager, runeLiteConfig);
+		this(client, stats, new SelectableGearScorer(config::scoringModel, names), tooltipManager, runeLiteConfig);
 	}
 
 	/** Testable rendering seam; production still uses the injected RuneLite adapters. */
 	GearScoreTooltipOverlay(
 		Client client,
 		ItemStatSource stats,
-		GearScoreCalculator calculator,
+		GearScorer calculator,
 		TooltipManager tooltipManager,
 		RuneLiteConfig runeLiteConfig)
 	{

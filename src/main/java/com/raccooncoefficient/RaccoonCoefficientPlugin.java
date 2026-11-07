@@ -8,6 +8,8 @@ import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
+import com.google.inject.Provides;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -30,6 +32,12 @@ public class RaccoonCoefficientPlugin extends Plugin
 
 	@Inject
 	private GearScoreTooltipOverlay gearScoreTooltipOverlay;
+
+	@Provides
+	RaccoonCoefficientConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(RaccoonCoefficientConfig.class);
+	}
 
 	@Override
 	protected void startUp()

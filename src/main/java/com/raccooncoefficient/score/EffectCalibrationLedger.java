@@ -131,6 +131,14 @@ public final class EffectCalibrationLedger
 			put(catalog, "barrows." + brother, Context.PROC_OR_HITPOINTS, null, null, null,
 				"Brother-specific combat passive; not a universal constant DPS bonus.");
 		}
+		put(catalog, "barrows.ahrim.damned", Context.PROC_OR_HITPOINTS, null, null, null,
+			"With full Ahrim and the amulet: 25% chance of +30% damage when autocasting.");
+		put(catalog, "barrows.karil.damned", Context.PROC_OR_HITPOINTS, null, null, "50",
+			"With full Karil and the amulet: 25% chance of a follow-up for half the first hit.");
+		put(catalog, "barrows.dharok.damned", Context.PROC_OR_HITPOINTS, null, null, null,
+			"With full Dharok and the amulet: 25% chance to recoil 15% of incoming damage.");
+		put(catalog, "barrows.verac.damned", Context.PROC_OR_HITPOINTS, null, null, null,
+			"With full Verac and the amulet: seven additional prayer bonus points.");
 		put(catalog, "justiciar", Context.DEFENSIVE_STYLE, null, null, null,
 			"Incoming damage reduction depends on matching defence bonus divided by 3000.");
 		put(catalog, "inquisitor.helm", Context.MELEE_STYLE, "0.5", "0.5", null,

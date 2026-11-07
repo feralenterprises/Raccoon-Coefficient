@@ -66,8 +66,8 @@ public class EffectCalibrationLedgerTest
 		Catalog catalog = new Catalog();
 		List<EffectCalibrationLedger.Observation> lines =
 			ledger.observe(wear(), catalog);
-		assertEquals(27, lines.size());
-		assertEquals(27, ledger.catalog().size());
+		assertEquals(31, lines.size()); // +3 damned (Crystal Wave) +1 Ahrim damned
+		assertEquals(31, ledger.catalog().size());
 		for (EffectCalibrationLedger.Observation line : lines)
 		{
 			assertEquals(EffectCalibrationLedger.Evidence.ABSENT, line.getEvidence());
